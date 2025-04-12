@@ -1,0 +1,52 @@
+﻿# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.class
+
+# Virtual environments
+.venv/
+env/
+venv/
+
+# VS Code
+.vscode/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# PyInstaller
+*.spec
+dist/
+build/
+
+# Logs
+*.log
+
+# Data and output
+data/output/
+*.tmp
+*.bak
+
+# System
+.DS_Store
+Thumbs.db
+
+# Python tools
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Model / temp cache
+.cache/
+.obfuscation_cache/
+
+# IDEs
+.idea/
+*.swp
+
+# Secrets
+.env
+*.env
+
+
+# Tests folder
+tests/
