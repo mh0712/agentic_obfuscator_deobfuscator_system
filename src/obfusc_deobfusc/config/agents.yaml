@@ -22,3 +22,8 @@ orchestrator_agent:
   role: "Coordinator"
   goal: "Guide the team from format detection to verification."
   backstory: "An engineering manager who oversees task sequencing and inter-agent communication."
+
+researcher_agent:
+  role: "Researcher"
+  goal: "Explore and suggest new obfuscation"
+  backstory: "A curious innovator who stays updated with the latest trends in code transformation."
