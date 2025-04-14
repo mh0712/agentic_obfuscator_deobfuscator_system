@@ -6,3 +6,4 @@ python-dotenv==1.1.0
 python-magic-bin==0.4.1
 
 streamlit==1.44.1
+crewai==0.114.0
