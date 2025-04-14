@@ -1,30 +1,44 @@
-import os
 import magic
-import re
+from detect.python_detect import is_python_code, is_obfuscated_py
+from detect.javascript_detect import is_js_code, is_obfuscated_js
 
-def detect_code_format(file_path: str) -> str:
-    # Use libmagic to check binary type
-    file_type = magic.from_file(file_path, mime=True)
-    if "text" not in file_type:
-        return "binary"
+def detect_code_format(file_path: str) -> dict:
+    mime_type = magic.from_file(file_path, mime=True)
+    print(f"[+] MIME Type: {mime_type}")
 
-    # If it's text, inspect content
-    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-        code = f.read()
+    if not mime_type.startswith("text"):
+        return {"type": mime_type, "language": "binary", "obfuscated": None, "confidence": 0.0}
 
-    if re.search(r"^\s*import\s|\s*def\s|\s*print\s*\(", code, re.M):
-        return "python"
-    elif re.search(r"^\s*(function|let|const|var)\s", code, re.M):
-        return "javascript"
-    elif re.search(r"#include\s|int\s+main", code, re.M):
-        return "c++"
+    try:
+        with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            code = f.read()
+    except Exception:
+        return {"type": mime_type, "language": "unknown", "obfuscated": None, "confidence": 0.0}
 
-    return "unknown"
+    # Check for Python code
+    if is_python_code(file_path):
+        result = is_obfuscated_py(file_path)  # Should return dict
+        return {
+            "type": "text/x-python",
+            "language": "python",
+            "obfuscated": result["obfuscated"],
+            "confidence": result["confidence"]
+        }
 
-def is_obfuscated(code: str) -> bool:
-    # Naive heuristics: weird variable names, lots of hashes, no spaces, etc.
-    suspicious_patterns = [
-        r"var_\d+", r"v_\d+", r"_[a-zA-Z0-9]{5,}", r"eval\(", r"obf_", r"minified"
-    ]
-    matches = sum(bool(re.search(p, code)) for p in suspicious_patterns)
-    return matches >= 2  # Adjust threshold
+    # Check for JavaScript code
+    if is_js_code(file_path):
+        result = is_obfuscated_js(file_path)  # Should return dict
+        return {
+            "type": "text/javascript",
+            "language": "javascript",
+            "obfuscated": result["obfuscated"],
+            "confidence": result["confidence"]
+        }
+
+    return {"type": mime_type, "language": "unknown", "obfuscated": None, "confidence": 0.0}
+
+if __name__ == "__main__":
+    # Example usage
+    file_path = "path/to/your/file.js"  # Replace with your file path
+    result = detect_code_format(file_path)
+    print(result)
