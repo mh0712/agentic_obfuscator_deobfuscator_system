@@ -1,6 +1,6 @@
 detect_format:
-  description: "Detect if the file is binary, Python, or JavaScript."
-  expected_output: "Language and file type classification (e.g. 'text/javascript')."
+  description: "Detect if the file is binary, Python, or JavaScript and determine if it is obfuscated."
+  expected_output: "JSON object with the following keys: 'language', 'type', 'obfuscated'."
   agent: "input_parser_agent"
 
 execute_code:
@@ -55,7 +55,7 @@ web_search:
         ```
       }}
     ]
-    Remember you should give an advanced example to use known obfuscation techniques! Simple obfuscation techniques might be reversed easily.
+    Remember you should give an advanced example to use known obfuscation techniques like variable renaming, opaque predicates, controlflow flatenning, dead code injection,data encryption and more... Simple obfuscation techniques might be reversed easily.
   expected_output: |
     The expected output is a structured list of obfuscation techniques for Python that can be applied to scripts.
     Each technique should include the following details:

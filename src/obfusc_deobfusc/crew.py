@@ -1,5 +1,5 @@
-from crewai import Agent, Task, Crew
-from tools.custom_tool import DetectFormatTool, ObfuscateTool, DeobfuscateTool
+from crewai import Agent, Task, Crew, LLM
+from tools.format_detector import detect_code_format
 import yaml, os
 
 def load_yaml(path):
@@ -7,61 +7,69 @@ def load_yaml(path):
         return yaml.safe_load(f)
 
 agents_config = load_yaml("config/agents.yaml")
-tasks_config = load_yaml("config/tasks.yaml")
+tools_config = load_yaml("config/tasks.yaml")
 
-# Tools
-format_tool = DetectFormatTool()
-obfuscate_tool = ObfuscateTool()
-deobfuscate_tool = DeobfuscateTool()
 
-# Agents with tools
-agents = {}
+# Initialize Groq model
+llm = LLM(model="groq/llama-3.3-70b-versatile")
 
-for name, config in agents_config.items():
-    tools = []
-    if "parser" in name:
-        tools = [format_tool]
-    elif "obfuscation" in name:
-        tools = [obfuscate_tool]
-    elif "deobfuscation" in name:
-        tools = [deobfuscate_tool]
+# Run the code-based format detection manually (not via LLM)
+file_path = "C:\\Users\\celin\\Desktop\\usj\\FYP\\agentic_obfuscator_deobfuscator_system\\samples\\hello.py"
+format_detection_result = detect_code_format(file_path)
+print("[+] Format Detection Result:", format_detection_result)
 
-    agent = Agent(
-        role=config["role"],
-        goal=config["goal"],
-        backstory=config["backstory"],
-        tools=tools,
-        verbose=True
-    )
-    agents[name] = agent
-
-# Tasks
-tasks = [
-    Task(description=tasks_config["detect_format"]["description"],
-         expected_output=tasks_config["detect_format"]["expected_output"],
-         agent=agents["input_parser_agent"]),
-    Task(description=tasks_config["web_search"]["description"],
-         expected_output=tasks_config["web_search"]["expected_output"],
-         agent=agents["researcher_agent"]),
-    Task(description=tasks_config["execute_code"]["description"],
-         expected_output=tasks_config["execute_code"]["expected_output"],
-         agent=agents["obfuscation_agent"]),
-    Task(description=tasks_config["obfuscate_code"]["description"],
-         expected_output=tasks_config["obfuscate_code"]["expected_output"],
-         agent=agents["obfuscation_agent"]),
-    Task(description=tasks_config["deobfuscate_code"]["description"],
-         expected_output=tasks_config["deobfuscate_code"]["expected_output"],
-         agent=agents["deobfuscation_agent"]),
-    Task(description=tasks_config["verify_correctness"]["description"],
-         expected_output=tasks_config["verify_correctness"]["expected_output"],
-         agent=agents["verifier_agent"]),
-]
-
-obfuscation_crew = Crew(
-    agents=list(agents.values()),
-    tasks=tasks,
-    verbose=True,
-    memory=True
+# Create agents using loaded config
+input_parser_agent = Agent(
+    role=agents_config['input_parser_agent']['role'],
+    goal=agents_config['input_parser_agent']['goal'],
+    backstory=agents_config['input_parser_agent']['backstory'],
+    llm=None,  # No LLM needed
+    verbose=False
 )
 
-__all__ = ["agents", "obfuscation_crew"]
+researcher_agent = Agent(
+    role=agents_config['researcher_agent']['role'],
+    goal=agents_config['researcher_agent']['goal'],
+    backstory=agents_config['researcher_agent']['backstory'],
+    llm=llm,
+    verbose=True
+)
+
+executer_agent = Agent(
+    role=agents_config['executer_agent']['role'],
+    goal=agents_config['executer_agent']['goal'],
+    backstory=agents_config['executer_agent']['backstory'],
+    llm=llm,
+    verbose=True
+)
+
+# Only proceed with the researcher and executor if code is obfuscated
+if format_detection_result['obfuscated']== False and format_detection_result['language'] in ["python", "javascript"]:
+    language = format_detection_result['language']
+
+    # Modify web search task to specify language for search
+    web_search_task = Task(
+        description=f"{tools_config['web_search']['description']} Target language: {language}.",
+        expected_output=tools_config['web_search']['expected_output'],
+        agent=researcher_agent
+    )
+
+    obfuscation_execution_task = Task(
+        description=tools_config['execute_code']['description'],
+        expected_output=tools_config['execute_code']['expected_output'],
+        agent=executer_agent,
+        dependencies=[web_search_task]
+    )
+
+    # Create the crew with researcher and executer agents
+    crew = Crew(
+        agents=[researcher_agent, executer_agent],
+        tasks=[web_search_task, obfuscation_execution_task],
+        verbose=True
+    )
+
+    result = crew.kickoff()
+    print(result)
+else:
+    print("[-] Code is not obfuscated or unsupported language.")
+

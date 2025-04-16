@@ -1,6 +1,6 @@
 from pathlib import Path
 import ast
-from detect.utils import has_encoded_strings, has_dynamic_execution, has_long_one_liner, has_suspicious_names
+from tools.detect.utils import has_encoded_strings, has_dynamic_execution, has_long_one_liner, has_suspicious_names
 
 def is_python_code(code_str: str) -> bool:
     try:

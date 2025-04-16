@@ -48,5 +48,13 @@ pip-delete-this-directory.txt
 *.env
 
 
-# Tests folder
+# Tests folder and test files
 tests/
+JavaScriptSamplesPairs/
+parser_tester.py
+
+#Scripts folder
+node_modules/
+package-lock.json
+
+
