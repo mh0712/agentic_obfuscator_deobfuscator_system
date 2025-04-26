@@ -15,7 +15,7 @@ def run():
     """
     Run the crew for the obfuscation task.
     """
-    file_path = sys.argv[2] if len(sys.argv) > 2 else 'C:\\Users\\celin\\Desktop\\usj\\FYP\\crew_agents\\obfuscation_deobfuscation_crew\\example.py'
+    file_path = sys.argv[2] if len(sys.argv) > 2 else 'C:\\Users\\celin\\Desktop\\usj\\FYP\\crew_agents\\obfuscation_deobfuscation_crew\\example.js'
     with open(file_path, 'r', encoding='utf-8') as f:
         code = f.read()
 

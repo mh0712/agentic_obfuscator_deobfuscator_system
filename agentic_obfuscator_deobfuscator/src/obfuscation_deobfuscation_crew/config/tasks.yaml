@@ -105,9 +105,7 @@ code_obfuscation_task:
     # Final obfuscated code here
     </code>
 
-  output_file:
-    python: "obfuscated_code.py"
-    javascript: "obfuscated_code.js"
+  output_file: obfuscated_code.js
   agent: obfuscation_llm
 
 excecution_validator_task:
@@ -213,28 +211,34 @@ final_obfuscation_task:
     </code>
     Ensure that the code is syntactically correct, executes without errors, and passes all unit tests.
   agent: obfuscation_llm
-  output: 
+  output_file: corrected_obfuscated_code.js
 
 apply_obfuxtreme_protection:
   description: >
-    Finalize the obfuscation process by applying advanced techniques to the corrected obfuscated code.
+    Finalize the obfuscation process by applying advanced multi-layer protection techniques
+    to the corrected obfuscated code, supporting both **Python** and **JavaScript**.
+
     This includes:
     1. **AES Encryption**: Encrypt the code using AES encryption to protect it from reverse engineering.
     2. **Compression**: Compress the encrypted code to reduce its size and make it less recognizable.
-    3. **Bytecode Transformation**: Convert the code into bytecode to further obscure its logic and structure.
-    4. **Self-Executing Loader**: Create a self-executing loader that decrypts and executes the obfuscated code at runtime.
-    5. **Standalone File**: Ensure the final output is a standalone Python file that can be executed without any dependencies.
+    3. **Bytecode Transformation** (Python only): Convert Python code into bytecode to further obscure its logic and structure.
+    4. **Self-Executing Loader**: Create a self-executing loader that decrypts, decompresses, and executes the code at runtime.
+    5. **Standalone File**: Ensure the final output is a standalone file that can be executed without any external dependencies.
 
-    use the obfuxtreme_finalizer tool to apply these techniques to the corrected obfuscated code.
-    The process should be seamless and should not require any additional libraries or dependencies to run.
-    Before returning the final output, ensure that the code is still syntactically correct and executes without errors.
-    The final output should be a single file that contains the obfuscated code, the AES encryption key, and the self-executing loader.
+    Use the `obfuxtreme_finalizer` tool to apply these techniques to the corrected obfuscated code from the previous task.
+    The tool should be able to handle both Python and JavaScript code.
+
+    **Important**:
+    - For Python: Use AES + compression + marshal or bytecode execution for maximum protection.
+    - For JavaScript: Use AES + compression + dynamic eval/Function constructor for execution.
+    - The final output must embed the encrypted payload, AES keys, and the loader logic inside a single executable script.
+    - Ensure the final script is syntactically correct and runs without errors.
+
   expected_output: |
     <code>
-    #The secure, final standalone encrypted version of the code.
+    # The fully protected, standalone encrypted version of the code.
     </code>
+
   agent: obfuxtreme_agent
-  input_file: corrected_obfuscated_code.py
-  output_file:
-      python: "obfuscated.py"
-      javascript: "obfuscated.js"
+  output_file: obfuscated_final.js
+

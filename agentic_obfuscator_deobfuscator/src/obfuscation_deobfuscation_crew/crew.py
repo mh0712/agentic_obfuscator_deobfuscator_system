@@ -3,8 +3,8 @@ import os
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 from src.obfuscation_deobfuscation_crew.tools.format_detector import detect_code_format
-from src.obfuscation_deobfuscation_crew.tools.detect.python_detect import analyze_python_complexity
-from src.obfuscation_deobfuscation_crew.tools.detect.javascript_detect import analyze_javascript_complexity
+from obfuscation_deobfuscation_crew.tools.python_tools import analyze_python_complexity
+from obfuscation_deobfuscation_crew.tools.javascript_tools import analyze_javascript_complexity
 from src.obfuscation_deobfuscation_crew.tools.build_loader import obfuscate
 from crewai.tools import tool
 from crewai_tools import CodeInterpreterTool
@@ -25,7 +25,7 @@ def detect_code_format_tool(file_path: str) -> dict:
     return result
 
 @tool("complexity_analyzer_tool")
-def complexity_analyzer_tool(code: str, language: str = "python") -> dict:
+def complexity_analyzer_tool(code: str, language: str) -> dict:
     """
     Analyze the complexity of the given code, based on its language.
     
@@ -40,16 +40,7 @@ def complexity_analyzer_tool(code: str, language: str = "python") -> dict:
         return analyze_python_complexity(code)
 
     elif language.lower() == "javascript":
-        # Write code to a temporary file to pass to the JS analyzer
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".js", mode='w', encoding='utf-8') as temp_file:
-            temp_file.write(code)
-            temp_file_path = temp_file.name
-
-        try:
-            result = analyze_javascript_complexity(temp_file_path)
-        finally:
-            os.remove(temp_file_path)  # Clean up
-
+        result = analyze_javascript_complexity(code)
         return result
 
     else:
@@ -57,20 +48,23 @@ def complexity_analyzer_tool(code: str, language: str = "python") -> dict:
 
 
 @tool("obfuxtreme_finalizer")
-def obfuxtreme_finalizer(code: str) -> dict:
+def obfuxtreme_finalizer(code: str,language: str) -> str:
     """
-    Obfuscates and secures a Python script string using marshal, zlib, AES,
-    and generates a final self-executing loader script.
+    Obfuscates and secures the given code using the Obfuxtreme tool.
+
     Args:
         code (str): The source code to be transformed.
+
     Returns:
-        dict: { "status": "success", "output_file": "obfuscated.py" }
+        str: The obfuscated and secured code.
     """
     try:
-        obfuscated_code = obfuscate(code)
+        obfuscated_code = obfuscate(code,language)
         return obfuscated_code
     except Exception as e:
-        return {"status": "failed", "error": str(e)}
+        print(f"[!] Obfuscation failed: {e}")
+        return ""
+
     
 
 @CrewBase
@@ -221,15 +215,12 @@ class ObfuscationDeobfuscationCrew():
 
     @task
     def final_obfuscation_task(self) -> Task:
-        print("Final Obfuscation Task")
-        language = self.input_analysis_task().output.raw['language']
-        print(f"Language: {language}")
        
         return Task(
             description=self.tasks_config['final_obfuscation_task']['description'],
             expected_output=self.tasks_config['final_obfuscation_task']['expected_output'],
             agent=self.obfuscation_llm(),
-            context=[self.feedback_loop_task()],
+            context=[self.feedback_loop_task(), self.input_analysis_task()],
             output_file=self.tasks_config['final_obfuscation_task']['output_file'],
         )
         
@@ -241,7 +232,7 @@ class ObfuscationDeobfuscationCrew():
             description=self.tasks_config['apply_obfuxtreme_protection']['description'],
             expected_output=self.tasks_config['apply_obfuxtreme_protection']['expected_output'],
             agent=self.obfuxtreme_agent(),
-            context=[self.final_obfuscation_task()],
+            context=[self.final_obfuscation_task(), self.input_analysis_task()],
             output_file=self.tasks_config['apply_obfuxtreme_protection']['output_file'],
         )
 

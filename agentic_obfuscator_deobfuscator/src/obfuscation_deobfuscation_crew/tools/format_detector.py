@@ -1,6 +1,6 @@
 import magic
-from src.obfuscation_deobfuscation_crew.tools.detect.python_detect import is_python_code, is_obfuscated_py
-from src.obfuscation_deobfuscation_crew.tools.detect.javascript_detect import is_js_code, is_obfuscated_js
+from obfuscation_deobfuscation_crew.tools.python_tools import is_python_code, is_obfuscated_py
+from obfuscation_deobfuscation_crew.tools.javascript_tools import is_js_code, is_obfuscated_js
 
 def detect_code_format(file_path: str) -> dict:
     mime_type = magic.from_file(file_path, mime=True)

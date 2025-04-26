@@ -1,12 +1,14 @@
 const esprima = require("esprima");
-const fs = require("fs");
 
 function analyzeJavaScriptComplexity(code) {
   let syntax;
   try {
     syntax = esprima.parseScript(code, { loc: true });
   } catch (e) {
-    return { error: `Syntax error in code: ${e.message}` };
+    console.error(
+      JSON.stringify({ error: `Syntax error in code: ${e.message}` })
+    );
+    process.exit(1);
   }
 
   let metrics = {
@@ -86,19 +88,26 @@ function analyzeJavaScriptComplexity(code) {
     max_nesting_depth: metrics.nesting_depth <= 5,
   };
 
-  return {
-    complexity_metrics: metrics,
-    applicability_flags: applicability_flags,
-  };
+  console.log(
+    JSON.stringify(
+      {
+        complexity_metrics: metrics,
+        applicability_flags: applicability_flags,
+      },
+      null,
+      2
+    )
+  );
 }
 
+// === Read code from stdin ===
+let code = "";
+process.stdin.setEncoding("utf8");
 
-const path = process.argv[2];
-const code = fs.readFileSync(path, "utf8");
-analyzeJavaScriptComplexity(code).then((result) => {
-  console.log(JSON.stringify(result, null, 2));
-}
-).catch((error) => {
-  console.error("Error analyzing code:", error);
+process.stdin.on("data", function (chunk) {
+  code += chunk;
 });
 
+process.stdin.on("end", function () {
+  analyzeJavaScriptComplexity(code);
+});

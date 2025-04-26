@@ -61,3 +61,10 @@ node_modules/
 models_obf_result/*
 !models_obf_result/controller.py
 
+complexity_analysis_output.json
+*.json
+!obfuscation_techniques.json
+
+corrected_obfuscated_code*
+obfuscated_code*
+obfuscated_final*
