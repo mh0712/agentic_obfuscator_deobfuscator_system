@@ -1,0 +1,240 @@
+input_analysis_task:
+  description: |
+    using detect_code_format_tool tool, The task is to analyze the provided code input from {file_path}. The process involves multiple steps:
+    1. **Code Type Detection**: Is the input a script or binary? Analyze the structure and headers to identify this.
+    2. **Language Detection**: What programming language is the code written in? This includes determining whether it's Python, JavaScript, or something unknown.
+    3. **Obfuscation Detection**: Does the code appear to be obfuscated? This requires looking for patterns that suggest code has been altered for the purpose of hiding its logic.
+
+    Each of these steps should be validated using syntax patterns, encoding anomalies, and variable naming conventions.
+
+  expected_output: |
+    {
+      "code_type": "script" | "binary",
+      "language": "python" | "javascript" | "unknown",
+      "is_obfuscated": true | false
+    }
+
+  agent: input_parser
+
+code_complexity_analysis_task:
+  description: |
+    Given the input code {code}, we need to assess its complexity through the following steps:
+    1. **Cyclomatic Complexity**: Calculate the overall complexity based on the control structures and functions in the code. The higher the cyclomatic complexity, the more challenging the code is to obfuscate.
+    2. **Nesting Depth**: Assess the depth of nesting in control structures such as loops and conditionals. Excessive nesting can complicate obfuscation techniques and potentially hinder code readability.
+    3. **Code Structure**: Count the number of functions, classes, and code blocks to understand the overall organization of the code. A large number of functions or classes can indicate higher complexity and suitability for certain obfuscation techniques.
+    4. **Obfuscation Suitability**: Flag the suitability of obfuscation techniques based on the structure and complexity of the code. This includes flags like the presence of identifiers, functions, string literals, and other key structures that make the code more complex and suitable for obfuscation.
+    5. **Error Handling**: The tool should also handle syntax errors gracefully and return an error message if the code is malformed.
+
+    Return the complexity metrics and applicability flags for obfuscation techniques that are relevant to the current code.
+
+  expected_output: |
+    {
+      "complexity_metrics": {
+        "lines": number,
+        "functions": number,
+        "classes": number,
+        "cyclomatic_complexity": number,
+        "variables": number,
+        "identifiers": number,
+        "strings": number,
+        "literals": number,
+        "booleans": number,
+        "control_structures": number,
+        "code_blocks": number,
+        "nesting_depth": number
+      },
+      "applicability_flags": {
+        "min_identifiers": true | false,
+        "min_functions": true | false,
+        "min_string_literals": true | false,
+        "min_literals": true | false,
+        "min_code_blocks": true | false,
+        "min_control_structures": true | false,
+        "min_boolean_expressions": true | false,
+        "max_nesting_depth": true | false
+      },
+      "error": string | null
+    }
+  agent: complexity_analyzer
+  output_file: complexity_analysis_output.json
+
+
+technique_selection_task:
+  description: |
+    Based on the analysis results, evaluate and select the best obfuscation techniques for this code. The reasoning should follow these steps:
+    1. **Language Compatibility**: Does the technique support the programming language of the code (Python or JavaScript)?
+    2. **Complexity Suitability**: Does the technique align with the complexity metrics identified in the previous task?
+    3. **Precondition Check**: Does the technique require any specific conditions to be met (e.g., minimum number of identifiers or literals)?
+    4. **Conflict Resolution**: Are there any conflicting techniques? If so, choose the one that best fits the code structure.
+    5. **Diversity of Techniques**: Ensure a balance of transformation types—data, structure, control-flow—to maximize obfuscation resilience.
+    6. **Layering Priority**: Ensure that techniques are applied in the correct order according to their priority.
+
+    Reasoning should be clear: if a technique is selected, provide a justification for its inclusion.
+    These techniques should be selected from the below JSON knowledge base that contains a list of obfuscation techniques, their descriptions, parameters, and layering priorities:
+    {obfuscation_techniques}
+
+  expected_output: |
+    [
+      {
+        "technique_name": "Technique 1",
+        "description": "Brief explanation of the technique",
+        "parameters": {
+          "param1": value,
+          "param2": value
+        },
+        "llm_prompt": "Instruction on how to apply this technique",
+        "layering_priority": 1,
+        "metrics_score": score,
+        "reasoning": "Explanation for selecting this technique"
+      },
+      ...
+    ]
+  output_file: selected_techniques.json
+  agent: technique_selector
+
+code_obfuscation_task:
+  description: |
+    Now that the techniques have been selected, we need to apply them to the code in a sequential manner based on their layering priority.
+    Each technique should be applied in turn, and the output of one step should be used as input for the next. The process involves:
+    1. **Obfuscation Layering**: Start with the first technique and apply it to the original code.
+    2. **Sequential Application**: After each technique, verify the output and apply the next technique, ensuring that the code's functionality is preserved at every step.
+    3. **Functionality Preservation**: Ensure that after applying each technique, the obfuscated code behaves the same as the original code.
+
+  expected_output: |
+    <code>
+    # Final obfuscated code here
+    </code>
+
+  output_file:
+    python: "obfuscated_code.py"
+    javascript: "obfuscated_code.js"
+  agent: obfuscation_llm
+
+excecution_validator_task:
+  description: |
+    Given the obfuscated code given by the code_obfuscation_task task, we need to ensure that the code is syntactically correct and that it excecutes without any runtime errors:  by:
+    1. **Parsing**: Checking whether the code is valid according to the syntax rules of its programming language (Python or JavaScript).
+    2. **Error Identification**: Identifying specific syntax errors if they exist, including line numbers and error types.
+    3.**Execution**: Run the code in a controlled environment.
+    4. **Error Handling**: If runtime errors occur, capture error messages or stack traces.
+
+    The task will output whether the code is syntactically correct or not, and if not, provide details about the errors found.
+    In addition, The task will output whether the code executes successfully without errors or if errors are encountered during execution.
+  
+  expected_output: |
+    {
+      "is_valid_syntax": true | false,
+      "syntax_error": {
+        "line_number": number,
+        "error_type": string,
+        "error_message": string
+      } | null,
+      "runs_without_error": true | false,
+      "runtime_error": {
+        "error_type": string,
+        "stack_trace": string
+      } | null
+    }
+  agent: execution_validator
+  output_file: execution_validation_result.json
+
+
+semantic_equivalence_test_task:
+  description: |
+    Given the original code {code} and the obfuscated code given by the code_obfuscation_task task , we need to:
+    1. **Generate Unit Tests**: Create a suite of unit tests to cover typical and edge cases for both versions.
+    2. **Run Tests**: Execute the unit tests on both the original and obfuscated versions of the code.
+    3. **Comparison**: Compare the outputs of both versions to ensure they match under identical inputs.
+
+    The task will output whether the unit tests pass for both versions and whether the outputs are identical.
+
+  expected_output: |
+    {
+      "semantically_equivalent": true | false,
+      "test_results": [
+        {
+          "test_name": string,
+          "input": any,
+          "original_output": any,
+          "obfuscated_output": any,
+          "match": true | false
+        }
+      ],
+      "error": string | null
+    }
+  agent: semantic_equivalence_validator
+  output_file: semantic_equivalence_result.json
+
+
+feedback_loop_task:
+  description: |
+    Based on the failed verification results from the excecution validatior task, runtime error checks, and also the unit test comparisons results from the semantic_equivalence_test_task task, we will:
+    1. **Analyze Errors**: Review the details of failed tests or errors in syntax/runtime.
+    2. **Recommend Adjustments**: Suggest changes to the obfuscation techniques or parameters.
+    3. **Modify Obfuscation**: Based on the feedback, suggest which techniques need to be applied differently or adjusted.
+
+    The task will output recommendations for improving the obfuscation process.
+
+  expected_output: |
+    {
+      "recommendations": [
+        {
+          "suggested_action": string,
+          "reason": string
+        }
+      ]
+    }
+  agent: feedback_loop_agent
+  output_file: feedback_loop_result.json
+
+final_obfuscation_task:
+  description: |
+    You are an obfuscation agent.
+
+    Your job is to refine previously obfuscated code **without making it more readable or undoing obfuscation**.
+
+    **Reason**:
+    - The code was obfuscated intentionally for security or intellectual property protection.
+    - Previous validation steps flagged issues (e.g., syntax errors, runtime errors, or incorrect outputs).
+    - Your goal is to make the code syntactically valid, runtime-correct, and semantically equivalent to the original — **without reducing its complexity or revealing its intent**.
+
+    **Action**:
+    - DO NOT simplify variable names, logic, or structure.
+    - ONLY fix syntax issues, execution bugs, or semantic mismatches.
+    - Preserve obfuscation: retain unreadable names, unnecessary-looking control flows, and encoded strings.
+    - Ensure that the code passes all unit tests and runs correctly.
+
+    ---
+    Proceed by analyzing the current obfuscated code and applying only the minimum necessary changes.
+
+  expected_output: |
+    <code>
+    # Final obfuscated code here
+    </code>
+    Ensure that the code is syntactically correct, executes without errors, and passes all unit tests.
+  agent: obfuscation_llm
+  output: 
+
+apply_obfuxtreme_protection:
+  description: >
+    Finalize the obfuscation process by applying advanced techniques to the corrected obfuscated code.
+    This includes:
+    1. **AES Encryption**: Encrypt the code using AES encryption to protect it from reverse engineering.
+    2. **Compression**: Compress the encrypted code to reduce its size and make it less recognizable.
+    3. **Bytecode Transformation**: Convert the code into bytecode to further obscure its logic and structure.
+    4. **Self-Executing Loader**: Create a self-executing loader that decrypts and executes the obfuscated code at runtime.
+    5. **Standalone File**: Ensure the final output is a standalone Python file that can be executed without any dependencies.
+
+    use the obfuxtreme_finalizer tool to apply these techniques to the corrected obfuscated code.
+    The process should be seamless and should not require any additional libraries or dependencies to run.
+    Before returning the final output, ensure that the code is still syntactically correct and executes without errors.
+    The final output should be a single file that contains the obfuscated code, the AES encryption key, and the self-executing loader.
+  expected_output: |
+    <code>
+    #The secure, final standalone encrypted version of the code.
+    </code>
+  agent: obfuxtreme_agent
+  input_file: corrected_obfuscated_code.py
+  output_file:
+      python: "obfuscated.py"
+      javascript: "obfuscated.js"
