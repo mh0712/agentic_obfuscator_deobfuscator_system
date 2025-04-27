@@ -1,4 +1,4 @@
-﻿# Byte-compiled / optimized / DLL files
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *.class
@@ -7,6 +7,7 @@ __pycache__/
 .venv/
 env/
 venv/
+.env
 
 # VS Code
 .vscode/
@@ -44,9 +45,26 @@ pip-delete-this-directory.txt
 *.swp
 
 # Secrets
-.env
-*.env
 
 
-# Tests folder
+
+# Tests folder and test files
 tests/
+JavaScriptSamplesPairs/
+parser_tester.py
+
+#Scripts folder
+node_modules/
+
+
+
+models_obf_result/*
+!models_obf_result/controller.py
+
+complexity_analysis_output.json
+*.json
+!obfuscation_techniques.json
+
+corrected_obfuscated_code*
+obfuscated_code*
+obfuscated_final*

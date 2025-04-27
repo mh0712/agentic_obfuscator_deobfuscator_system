@@ -1,0 +1,329 @@
+obfuscation_techniques:
+  - name: "Variable Renaming"
+    transformation_type: "structure"
+    conflicts_with: []
+    applicability: ["python", "javascript"]
+    conditions:
+      min_identifiers: 3
+    complexity_rating: 3
+    deobfuscation_risk: 7
+    description: "Replace variable and function names with randomly generated strings to hinder readability and reverse engineering."
+    parameters:
+      name_length: 8
+      allowed_characters: "abcdefghijklmnopqrstuvwxyz_0123456789"
+    llm_prompt: |
+      You are an obfuscation engine.
+
+      Task:
+      Apply variable renaming to the following code by replacing all function names, parameter names, and variable names with unique, meaningless identifiers.
+
+      Constraints:
+      - All new names must be exactly {{name_length}} characters long.
+      - Only use lowercase letters from this set: "{{allowed_characters}}".
+      - Avoid Python/JavaScript keywords and built-in names.
+      - Ensure the obfuscated code remains functional and syntactically valid.
+      - Do not alter string literals, comments, or any external API/library names.
+      - Maintain formatting and indentation of the original code.
+
+      Input code:
+      ```{{language}}
+      {{code}}
+      ```
+
+      Output the obfuscated code in the same format as the input.
+      Ensure that the output is valid and can be executed without errors.
+      Do not include any explanations or additional text in the output.
+      Just provide the obfuscated code.
+
+  - name: "String Encryption"
+    transformation_type: "data"
+    conflicts_with:
+      - "String Splitting"
+    applicability: ["python", "javascript"]
+    conditions:
+      min_string_literals: 1
+    complexity_rating: 5
+    deobfuscation_risk: 6
+    description: "Encrypt or encode all string literals in the code and insert corresponding decryption logic to restore them at runtime. This makes it harder to understand hardcoded values or sensitive content through static analysis."
+    parameters:
+      method: "base64"
+      variable_name_length: 8
+      allowed_characters: "abcdefghijklmnopqrstuvwxyz"
+    llm_prompt: |
+      You are a code obfuscation specialist.
+
+      Task:
+      Obfuscate the following {{language}} code by encrypting all string literals using the "{{method}}" encoding technique. Insert decoding logic that restores the original strings during execution.
+
+      Constraints:
+      - Do not alter the functionality of the code.
+      - Encode all plain string literals (e.g., printed messages, assignments, comparisons).
+      - Use short, meaningless variable or function names ({{variable_name_length}} characters) for the decoder logic, using only these characters: "{{allowed_characters}}".
+      - Do NOT encode import statements, file paths to external libraries, or docstrings used for documentation.
+      - Keep formatting intact and ensure the code remains valid and executable.
+
+      Output the obfuscated code in the same format as the input.
+      Ensure that the output is valid and can be executed without errors.
+      Do not include any explanations or additional text in the output.
+      Just provide the obfuscated code.
+
+      Input code:
+      ```{{language}}
+      {{code}}
+      ```
+
+  - name: "Opaque Predicates"
+    transformation_type: "logic"
+    conflicts_with:
+      - "Dead Code Injection"
+    applicability: ["python", "javascript"]
+    conditions:
+      min_control_structures: 1
+    complexity_rating: 6
+    deobfuscation_risk: 5
+    description: "Introduce opaque predicates (expressions that always evaluate to True or False) into conditionals or control flows to mislead reverse engineering without changing behavior."
+    parameters:
+      insertion_frequency: "moderate"
+      predicate_type: "always_true"
+      variable_name_length: 8
+      allowed_characters: "abcdefghijklmnopqrstuvwxyz"
+    llm_prompt: |
+      You are an expert in control flow obfuscation.
+
+      Task:
+      Obfuscate the following {{language}} code by injecting opaque predicates that:
+      - Add conditional logic that always evaluates to {{predicate_type}}.
+      - Do not affect the actual execution flow of the original program.
+
+      Constraints:
+      - Insert opaque predicates at {{insertion_frequency}} frequency (e.g., after variable declarations, inside loops, or conditionals).
+      - All opaque branches that don't affect execution must include no-ops or misleading logic (e.g., empty blocks, decoy functions).
+      - Any helper variables or functions you introduce must use meaningless {{variable_name_length}}-character names from the set "{{allowed_characters}}".
+      - Ensure final output is valid and maintains the same observable behavior.
+
+      Examples of valid opaque predicates:
+        - `if (123 * 0 + 1 == 1):` (Python)
+        - `if ((x * 0 + 1) === 1) {}` (JavaScript)
+
+        Output the obfuscated code in the same format as the input.
+      Ensure that the output is valid and can be executed without errors.
+      Do not include any explanations or additional text in the output.
+      Just provide the obfuscated code.
+
+      Input code:
+      ```{{language}}
+      {{code}}
+      ```
+
+  - name: "Dead Code Injection"
+    transformation_type: "structure"
+    conflicts_with:
+      - "Opaque Predicates"
+    applicability: ["python", "javascript"]
+    conditions:
+      min_code_blocks: 2
+    complexity_rating: 4
+    deobfuscation_risk: 5
+    description: "Inject non-functional code (dead code) that does not alter the program's behavior but makes static analysis more difficult. This includes unused variables, fake conditions, no-op functions, or unreachable branches."
+    parameters:
+      noise_density: 0.2
+      allowed_dead_types: ["useless loops", "always-false ifs", "unused functions"]
+    llm_prompt: |
+      You are a code obfuscator.
+
+      Apply dead code injection to the following {{language}} code:
+      - Add code that does not affect functionality (e.g., unused variables, fake functions, always-false branches).
+      - Maintain original behavior and output.
+      - Inject noise based on the density value: {{noise_density}}.
+      - Use only these types of dead code: {{allowed_dead_types | join(", ")}}.
+      - Spread the dead code naturally between blocks, not all in one place.
+
+      Output the obfuscated code in the same format as the input.
+      Ensure that the output is valid and can be executed without errors.
+      Do not include any explanations or additional text in the output.
+      Just provide the obfuscated code.
+
+      ```{{language}}
+      {{code}}
+      ```
+
+  - name: "Array Folding"
+    transformation_type: "data"
+    conflicts_with:
+      - "Minification"
+    applicability: ["python", "javascript"]
+    conditions:
+      min_literals: 2
+    complexity_rating: 6
+    deobfuscation_risk: 5
+    description: "Consolidate multiple constants or values into a single array and access them by index. This obscures the meaning of hardcoded strings, function names, or operations."
+    parameters:
+      fold_literals: true
+      fold_identifiers: false
+      use_index_aliasing: true
+    llm_prompt: |
+      You are an expert in semantic-preserving obfuscation.
+
+      Task:
+      Obfuscate the following {{language}} code using array folding.
+
+      - Replace hardcoded literals or constants with entries in an array.
+      - Access values using indexed references.
+      - If index aliasing is enabled, assign index values to variables before use.
+
+      Parameters:
+      - Fold literals: {{fold_literals}}
+      - Fold identifiers: {{fold_identifiers}}
+      - Index aliasing: {{use_index_aliasing}}
+
+      Example (before):
+      print("Hello")
+
+      Example (after):
+      arr = ["Hello"]
+      print(arr[0])
+
+      Now apply this pattern to:
+      ```{{language}}
+      {{code}}
+      ```
+      Output the obfuscated code in the same format as the input.
+      Ensure that the output is valid and can be executed without errors.
+      Do not include any explanations or additional text in the output.
+      Just provide the obfuscated code.
+
+  - name: "String Splitting"
+    transformation_type: "data"
+    conflicts_with:
+      - "String Encryption"
+    applicability: ["python", "javascript"]
+    conditions:
+      min_string_literals: 1
+    complexity_rating: 4
+    deobfuscation_risk: 3
+    description: "Break strings into multiple concatenated or joined segments to make static string analysis more difficult. This can also include reversing or encoding parts of the string."
+    parameters:
+      max_chunk_length: 4
+      use_reversed_chunks: true
+      join_method: "concat"
+    llm_prompt: |
+      You are tasked with obfuscating strings in {{language}} code via string splitting.
+
+      Instructions:
+      - Split string literals into smaller chunks (max length: {{max_chunk_length}}).
+      - If {{use_reversed_chunks}}, reverse some chunks randomly before joining.
+      - Use the {{join_method}} method to reassemble the strings.
+      - Ensure all resulting strings reconstruct the same output as originals.
+      - Avoid obvious or repetitive chunk patterns.
+
+      Input:
+      ```{{language}}
+      {{code}}
+      ```
+      Output the obfuscated code in the same format as the input.
+      Ensure that the output is valid and can be executed without errors.
+      Do not include any explanations or additional text in the output.
+      Just provide the obfuscated code.
+
+  - name: "Control Flow Insertion"
+    transformation_type: "logic"
+    conflicts_with:
+      - "Function Outlining"
+    applicability: ["python", "javascript"]
+    conditions:
+      min_control_structures: 1
+    complexity_rating: 7
+    deobfuscation_risk: 6
+    description: "Insert misleading control flow logic such as fake branches, unnecessary loops, and opaque switch statements to make program flow hard to follow without changing behavior."
+    parameters:
+      insert_false_conditions: true
+      insert_nested_blocks: true
+      max_nesting_depth: 3
+    llm_prompt: |
+      You are a control-flow obfuscator.
+
+      Modify the following {{language}} code by inserting misleading control structures:
+      - Add fake `if` branches, `while` loops, or `try-except` blocks that do not execute or affect logic.
+      - Use fake conditions like `if 1 == 0`, or loops that never iterate.
+      - Nest structures up to a depth of {{max_nesting_depth}}.
+      - Insert fake branches only if {{insert_false_conditions}} is true.
+      - Nest blocks only if {{insert_nested_blocks}} is true.
+      - Maintain the original behavior and outputs of the code.
+
+      Input:
+      ```{{language}}
+      {{code}}
+      ```
+      Output the obfuscated code in the same format as the input.
+      Ensure that the output is valid and can be executed without errors.
+      Do not include any explanations or additional text in the output.
+      Just provide the obfuscated code.
+
+  - name: "Function Outlining"
+    transformation_type: "structure"
+    conflicts_with:
+      - "Control Flow Insertion"
+    applicability: ["python", "javascript"]
+    conditions:
+      min_function_length: 3
+      requires_functions: true
+    complexity_rating: 5
+    deobfuscation_risk: 4
+    description: "Split large functions into smaller, misleadingly named helper functions to make analysis of the code’s flow more difficult."
+    parameters:
+      outline_function_size: 5
+      use_random_names: true
+    llm_prompt: |
+      You are tasked with obfuscating large functions by splitting them into smaller ones.
+
+      Task:
+      - Split functions that are longer than {{outline_function_size}} lines into smaller functions.
+      - Use random, meaningless function names when outlining.
+      - Ensure the overall functionality remains the same, but the code is more difficult to follow.
+      - Ensure that all helper functions are named randomly (if {{use_random_names}} is true).
+      - Preserve original behavior and functionality.
+
+      Input code:
+      ```{{language}}
+      {{code}}
+      ```
+      Output the obfuscated code in the same format as the input.
+      Ensure that the output is valid and can be executed without errors.
+      Do not include any explanations or additional text in the output.
+      Just provide the obfuscated code.
+
+  - name: "Minification"
+    transformation_type: "structure"
+    conflicts_with:
+      - "Array Folding"
+    applicability: ["python", "javascript"]
+    conditions:
+      min_code_length: 10
+    complexity_rating: 2
+    deobfuscation_risk: 3
+    description: "Remove all unnecessary characters such as whitespace, comments, and newline characters to reduce the code's size and make it harder to read without affecting functionality."
+    parameters:
+      remove_comments: true
+      remove_newlines: true
+      remove_extra_spaces: true
+    llm_prompt: |
+      You are tasked with minifying the following {{language}} code.
+
+      Task:
+      - Remove all whitespace, indentation, comments, and newlines to reduce the size of the code.
+      - The code should remain functionally equivalent to the original version.
+      - Make sure the code is as compact as possible while keeping it syntactically valid.
+
+      Constraints:
+      - Do not remove or alter any string literals, function calls, or variable names.
+      - Do not change the logic or flow of the program.
+
+      Input code:
+      ```{{language}}
+      {{code}}
+      ```
+
+      Output the minified code in the same format as the input.
+      Ensure that the output is valid and can be executed without errors.
+      Do not include any explanations or additional text in the output.
+      Just provide the minified code.
