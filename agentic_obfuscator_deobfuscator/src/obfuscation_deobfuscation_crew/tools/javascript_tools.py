@@ -1,40 +1,41 @@
 import os
 import subprocess
 import json
+from pathlib import Path
+
+# Build script absolute paths dynamically
+SCRIPTS_DIR = Path(__file__).resolve().parent / "scripts"
+JS_CODE_CHECK = str(SCRIPTS_DIR / "js_code_check.js")
+JS_OBFUSCATION_CHECK = str(SCRIPTS_DIR / "js_obfuscation_check.js")
+COMPLEXITY_ANALYSER = str(SCRIPTS_DIR / "complexity_analyser.js")
+BUILD_LOADER = str(SCRIPTS_DIR / "build_loader.js")
 
 def is_js_code(code_path: str) -> bool:
     try:
-        # Resolve long path (using UNC if needed)
-        long_path = os.path.abspath(code_path)
-        long_path = r"\\?\\" + long_path if len(long_path) > 260 else long_path
-        
         result = subprocess.run(
-            ["node", "C:\\Users\\celin\\Desktop\\usj\\FYP\\agentic_obfuscator_deobfuscator_system\\agentic_obfuscator_deobfuscator\\src\\obfuscation_deobfuscation_crew\\tools\\scripts\\js_code_check.js", long_path],
+            ["node", JS_CODE_CHECK, code_path],
             capture_output=True, text=True, check=True
         )
         return result
     except Exception as e:
         print(f"[!] JavaScript detection failed: {e}")
         return False
-    
+
 def is_obfuscated_js(file_path: str) -> bool:
     try:
         result = subprocess.run(
-            ["node", "C:\\Users\\celin\\Desktop\\usj\\FYP\\agentic_obfuscator_deobfuscator_system\\agentic_obfuscator_deobfuscator\\src\\obfuscation_deobfuscation_crew\\tools\\scripts\\js_obfuscation_check.js", file_path],
+            ["node", JS_OBFUSCATION_CHECK, file_path],
             capture_output=True, text=True, check=True
         )
         output = json.loads(result.stdout.strip())
         return output
     except Exception as e:
         print(f"[!] JavaScript obfuscation check failed: {e}")
-        
-import subprocess
-import json
 
 def analyze_javascript_complexity(code: str) -> dict:
     try:
         result = subprocess.run(
-            ["node", "C:\\Users\\celin\\Desktop\\usj\\FYP\\agentic_obfuscator_deobfuscator_system\\agentic_obfuscator_deobfuscator\\src\\obfuscation_deobfuscation_crew\\tools\\scripts\\complexity_analyser.js"],
+            ["node", COMPLEXITY_ANALYSER],
             input=code,
             capture_output=True,
             text=True,
@@ -48,12 +49,11 @@ def analyze_javascript_complexity(code: str) -> dict:
     except Exception as e:
         print(f"[!] Unexpected error during JavaScript complexity analysis: {e}")
         return {"error": str(e)}
-     
 
 def obfuscate_js(code: str) -> str:
     try:
         result = subprocess.run(
-            ["node", "C:\\Users\\celin\\Desktop\\usj\\FYP\\agentic_obfuscator_deobfuscator_system\\agentic_obfuscator_deobfuscator\\src\\obfuscation_deobfuscation_crew\\tools\\scripts\\build_loader.js"],
+            ["node", BUILD_LOADER],
             input=code,
             capture_output=True,
             text=True,

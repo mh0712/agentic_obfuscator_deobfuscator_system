@@ -56,7 +56,7 @@ code_complexity_analysis_task:
       "error": string | null
     }
   agent: complexity_analyzer
-  output_file: complexity_analysis_output.json
+  output_file: output/complexity_analysis_output.json
 
 
 technique_selection_task:
@@ -89,7 +89,7 @@ technique_selection_task:
       },
       ...
     ]
-  output_file: selected_techniques.json
+  output_file: output/selected_techniques.json
   agent: technique_selector
 
 code_obfuscation_task:
@@ -105,7 +105,7 @@ code_obfuscation_task:
     # Final obfuscated code here
     </code>
 
-  output_file: obfuscated_code.js
+  output_file: output/obfuscated_code.{extension}
   agent: obfuscation_llm
 
 excecution_validator_task:
@@ -134,7 +134,7 @@ excecution_validator_task:
       } | null
     }
   agent: execution_validator
-  output_file: execution_validation_result.json
+  output_file: output/execution_validation_result.json
 
 
 semantic_equivalence_test_task:
@@ -161,7 +161,7 @@ semantic_equivalence_test_task:
       "error": string | null
     }
   agent: semantic_equivalence_validator
-  output_file: semantic_equivalence_result.json
+  output_file: output/semantic_equivalence_result.json
 
 
 feedback_loop_task:
@@ -183,7 +183,7 @@ feedback_loop_task:
       ]
     }
   agent: feedback_loop_agent
-  output_file: feedback_loop_result.json
+  output_file: output/feedback_loop_result.json
 
 final_obfuscation_task:
   description: |
@@ -211,7 +211,7 @@ final_obfuscation_task:
     </code>
     Ensure that the code is syntactically correct, executes without errors, and passes all unit tests.
   agent: obfuscation_llm
-  output_file: corrected_obfuscated_code.js
+  output_file: output/corrected_obfuscated_code.{extension}
 
 apply_obfuxtreme_protection:
   description: >
@@ -240,5 +240,5 @@ apply_obfuxtreme_protection:
     </code>
 
   agent: obfuxtreme_agent
-  output_file: obfuscated_final.js
+  output_file: output/obfuscated_final.{extension}
 

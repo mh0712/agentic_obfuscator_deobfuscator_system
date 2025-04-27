@@ -1,17 +1,19 @@
+import os
+
 def remove_first_and_last_line(file_path):
+    if not os.path.exists(file_path):
+        print(f"[!] Warning: file {file_path} does not exist. Skipping remove_first_and_last_line.")
+        return
+    
     with open(file_path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
 
-    # Guard: Make sure there are at least 3 lines to remove first and last
-    if len(lines) < 3:
-        raise ValueError("File must contain at least 3 lines to safely remove the first and last lines.")
-
-    # Remove the first and last lines
-    updated_lines = lines[1:-1]
-
-    # Overwrite the file with the new content
+    if len(lines) <= 2:
+        print(f"[!] Warning: file {file_path} has too few lines to process.")
+        return
+    
     with open(file_path, 'w', encoding='utf-8') as f:
-        f.writelines(updated_lines)
+        f.writelines(lines[1:-1])
 
     print(f"[+] Updated {file_path}: removed first and last lines.")
 

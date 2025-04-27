@@ -9,25 +9,6 @@ load_dotenv()
 MODEL_NAME = os.getenv("MODEL")
 ROOT_DIR = os.getcwd()
 RESULT_DIR = os.path.join(ROOT_DIR, "models_obf_result")
-FILES_TO_COPY = [
-    "complexity_analysis_output.json",
-    "selected_techniques.json",
-    "feedback_loop_result.json",
-    "execution_validator_result.json",
-    "final_obfuscated_code.py",
-    "final_obfuscated_code.js",
-    "unit_test_comparison_result.json",
-    "unit_test_results.json",
-    "technique_selection_result.yaml",
-    "semantic_validation_result.json",
-    "example.py",
-    "example.js",
-    "obfuscated_code.py",
-    "obfuscated_code.js",
-    "execution_comparison_result.json",
-    "corrected_obfuscated_code.py",
-    "obfuscated.py",
-]
 
 def get_unique_folder_name(base_name: str, parent_dir: str) -> str:
     """Generates a unique folder name by appending _1, _2, etc., if needed."""
@@ -42,7 +23,31 @@ def get_unique_folder_name(base_name: str, parent_dir: str) -> str:
             return new_path
         counter += 1
 
-def copy_outputs():
+
+def copy_outputs(extension: str = ".py") -> None:
+    
+    INPUT_FILES_TO_COPY = [  
+        f"example{extension}",
+     ]
+    
+    OUTPUT_FILES_TO_COPY = [
+        "complexity_analysis_output.json",
+        "selected_techniques.json",
+        "feedback_loop_result.json",
+        "execution_validator_result.json",
+        "unit_test_comparison_result.json",
+        "unit_test_results.json",
+        "technique_selection_result.yaml",
+        "semantic_validation_result.json",
+        "execution_comparison_result.json",
+        f"obfuscated{extension}",
+        f"obfuscated_code{extension}",
+        f"obfuscated_final{extension}",
+        f"final_obfuscated_code{extension}",
+        f"corrected_obfuscated_code{extension}",
+    ]
+
+
     if not MODEL_NAME:
         raise ValueError("MODEL environment variable not set in .env file")
 
@@ -53,19 +58,22 @@ def copy_outputs():
     output_folder = get_unique_folder_name(MODEL_NAME, RESULT_DIR)
     os.makedirs(output_folder, exist_ok=True)
 
-    # Copy files into the result folder
-    for filename in FILES_TO_COPY:
-        source_path = os.path.join(ROOT_DIR, filename)
-        if filename == "example.py" or filename == "example.js":
+    # Handle input files
+    for filename in INPUT_FILES_TO_COPY:
+        source_path = os.path.join(ROOT_DIR, "input", filename)
+        if os.path.exists(source_path):
             shutil.copy(source_path, os.path.join(output_folder, filename))
-        elif os.path.exists(source_path):
-            shutil.move(source_path, os.path.join(output_folder, filename))
-            print(f"[+] Copied {filename} to {output_folder}")
+            print(f"[+] Copied input file {filename} to {output_folder}")
         else:
-            print(f"[!] Warning: {filename} not found in root directory.")
-            continue
+            print(f"[!] Warning: Input file {filename} not found in input/ folder.")
 
-    print(f"[✓] All available files copied to: {output_folder}")
+    # Handle output files
+    for filename in OUTPUT_FILES_TO_COPY:
+        source_path = os.path.join(ROOT_DIR, "output", filename)
+        if os.path.exists(source_path):
+            shutil.move(source_path, os.path.join(output_folder, filename))
+            print(f"[+] Moved output file {filename} to {output_folder}")
+        else:
+            print(f"[!] Warning: Output file {filename} not found in output/ folder.")
 
-if __name__ == "__main__":
-    copy_outputs()
+    print(f"[✓] All available files processed to: {output_folder}")

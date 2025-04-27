@@ -8,6 +8,7 @@ from obfuscation_deobfuscation_crew.tools.javascript_tools import analyze_javasc
 from src.obfuscation_deobfuscation_crew.tools.build_loader import obfuscate
 from crewai.tools import tool
 from crewai_tools import CodeInterpreterTool
+import yaml
 
 
 @tool("detect_code_format_tool")
@@ -68,11 +69,22 @@ def obfuxtreme_finalizer(code: str,language: str) -> str:
     
 
 @CrewBase
-class ObfuscationDeobfuscationCrew():
-    agents_config = 'config/agents.yaml'
-    tasks_config = 'config/tasks.yaml'
-    
+class ObfuscationDeobfuscationCrew:
+    def __init__(self, tasks_path='config/tasks.yaml', extension='js'):
+        self.extension = extension
 
+        # Local yaml loader
+        def load_yaml(path):
+            with open(path, "r", encoding="utf-8") as f:
+                return yaml.safe_load(f)
+
+        self.agents_config = load_yaml('src/obfuscation_deobfuscation_crew/config/agents.yaml')
+        self.tasks_config = load_yaml(tasks_path)
+
+        # Dynamically replace {extension} inside all output_file fields
+        for task_key, task_val in self.tasks_config.items():
+            if isinstance(task_val, dict) and 'output_file' in task_val:
+                task_val['output_file'] = task_val['output_file'].replace('{extension}', self.extension)
     @agent
     def input_parser(self) -> Agent:
         return Agent(
@@ -114,7 +126,7 @@ class ObfuscationDeobfuscationCrew():
         return Agent(
             config=self.agents_config['execution_validator'],
             verbose=True,
-            tools =[CodeInterpreterTool()]
+            tools=[CodeInterpreterTool()],
         )
         
     @agent
@@ -132,7 +144,7 @@ class ObfuscationDeobfuscationCrew():
             config=self.agents_config['feedback_loop_agent'],
             verbose=True,
             max_execution_time=120,
-            max_retry_limit=2
+            max_retry_limit=2,
         )
     
     @agent
@@ -150,7 +162,7 @@ class ObfuscationDeobfuscationCrew():
             description=self.tasks_config['input_analysis_task']['description'],
             expected_output=self.tasks_config['input_analysis_task']['expected_output'],
             agent=self.input_parser(),
-            inputs={"file_path": "{{inputs.file_path}}"}
+            inputs={"file_path": "{{inputs.file_path}}"},
         )
 
     @task
@@ -160,7 +172,7 @@ class ObfuscationDeobfuscationCrew():
             expected_output=self.tasks_config['code_complexity_analysis_task']['expected_output'],
             agent=self.complexity_analyzer(),
             context=[self.input_analysis_task()],
-            output_file="complexity_analysis_output.json"
+            output_file=self.tasks_config['code_complexity_analysis_task']['output_file'],
         )
 
     @task
@@ -190,7 +202,7 @@ class ObfuscationDeobfuscationCrew():
             expected_output=self.tasks_config['excecution_validator_task']['expected_output'],
             agent=self.execution_validator(),
             context=[self.code_obfuscation_task()],
-            output_file="execution_validator_result.json"
+            output_file=self.tasks_config['excecution_validator_task']['output_file'],
         )
 
     @task
@@ -200,7 +212,7 @@ class ObfuscationDeobfuscationCrew():
             expected_output=self.tasks_config['semantic_equivalence_test_task']['expected_output'],
             agent=self.semantic_equivalence_validator(),
             context=[self.input_analysis_task(), self.code_obfuscation_task()],
-            output_file="unit_test_comparison_result.json"
+            output_file=self.tasks_config['semantic_equivalence_test_task']['output_file'],
         )
 
     @task
@@ -210,12 +222,11 @@ class ObfuscationDeobfuscationCrew():
             expected_output=self.tasks_config['feedback_loop_task']['expected_output'],
             agent=self.feedback_loop_agent(),
             context=[self.semantic_equivalence_test_task(), self.excecution_validator_task()],
-            output_file="feedback_loop_result.json"
+            output_file=self.tasks_config['feedback_loop_task']['output_file'],
         )
 
     @task
     def final_obfuscation_task(self) -> Task:
-       
         return Task(
             description=self.tasks_config['final_obfuscation_task']['description'],
             expected_output=self.tasks_config['final_obfuscation_task']['expected_output'],
@@ -223,11 +234,9 @@ class ObfuscationDeobfuscationCrew():
             context=[self.feedback_loop_task(), self.input_analysis_task()],
             output_file=self.tasks_config['final_obfuscation_task']['output_file'],
         )
-        
+
     @task
     def apply_obfuxtreme_protection(self) -> Task:
-
-
         return Task(
             description=self.tasks_config['apply_obfuxtreme_protection']['description'],
             expected_output=self.tasks_config['apply_obfuxtreme_protection']['expected_output'],
@@ -236,11 +245,8 @@ class ObfuscationDeobfuscationCrew():
             output_file=self.tasks_config['apply_obfuxtreme_protection']['output_file'],
         )
 
-
-
     @crew
     def crew(self) -> Crew:
-        
         return Crew(
             agents=self.agents,
             tasks=self.tasks,
