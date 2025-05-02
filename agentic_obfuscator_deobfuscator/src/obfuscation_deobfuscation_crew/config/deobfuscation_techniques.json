@@ -1,0 +1,135 @@
+{
+  "deobfuscation_techniques": [
+    {
+      "name": "Variable Recovery",
+      "reverse_of": "Variable Renaming",
+      "applicability": ["python", "javascript"],
+      "complexity_rating": 3,
+      "description": "Recover meaningful variable and function names through contextual analysis and consistent usage patterns.",
+      "strategies": ["name clustering", "usage inference", "common idioms"],
+      "llm_prompt": "Task:\nDeobfuscate the following {{language}} code by renaming variables and functions to meaningful names based on context.\nConstraints:\n- Maintain functionality.\n- Use descriptive names that match usage (e.g., 'counter', 'message', 'userInput').\n- Do not modify string literals or logic.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+    },
+    {
+      "name": "String Decoding",
+      "reverse_of": "String Encryption",
+      "applicability": ["python", "javascript"],
+      "complexity_rating": 5,
+      "description": "Detect and decode encrypted string literals and replace them inline with plaintext values.",
+      "strategies": [
+        "static base64/XOR decoding",
+        "runtime decoder analysis",
+        "function tracing"
+      ],
+      "llm_prompt": "Task:\nIdentify encrypted or encoded string literals and replace them with their decoded plaintext equivalents.\nConstraints:\n- Decode only deterministic, reversible encodings (e.g., Base64, XOR).\n- Replace calls to decoder functions with direct strings when possible.\n- Preserve syntax and logic.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+    },
+    {
+      "name": "Opaque Predicate Elimination",
+      "reverse_of": "Opaque Predicates",
+      "applicability": ["python", "javascript"],
+      "complexity_rating": 6,
+      "description": "Detect and eliminate always-true or always-false branches without affecting functionality.",
+      "strategies": [
+        "constant expression evaluation",
+        "symbolic execution",
+        "static simplification"
+      ],
+      "llm_prompt": "Task:\nSimplify control structures by eliminating opaque predicates that are always true or false.\nConstraints:\n- Identify branches with deterministic outcomes.\n- Remove dead branches and simplify logic.\n- Preserve original program behavior.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+    },
+    {
+      "name": "Dead Code Removal",
+      "reverse_of": "Dead Code Injection",
+      "applicability": ["python", "javascript"],
+      "complexity_rating": 4,
+      "description": "Remove non-functional code that does not contribute to program output or state.",
+      "strategies": [
+        "reachability analysis",
+        "unused function detection",
+        "constant condition evaluation"
+      ],
+      "llm_prompt": "Task:\nRemove dead or unreachable code blocks from the following {{language}} code.\nConstraints:\n- Ensure no change to runtime behavior.\n- Eliminate unused functions, unreachable branches, and no-op logic.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+    },
+    {
+      "name": "Literal Unfolding",
+      "reverse_of": "Array Folding",
+      "applicability": ["python", "javascript"],
+      "complexity_rating": 6,
+      "description": "Unfold arrays or structures used to store constants back into their literal forms.",
+      "strategies": [
+        "index trace analysis",
+        "constant propagation",
+        "value reconstruction"
+      ],
+      "llm_prompt": "Task:\nSimplify code by replacing array lookups and reconstructions with direct literal values.\nConstraints:\n- Flatten array-encoded strings or values.\n- Replace index-based access with the actual value.\n- Maintain behavior and formatting.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+    },
+    {
+      "name": "String Reassembly",
+      "reverse_of": "String Splitting",
+      "applicability": ["python", "javascript"],
+      "complexity_rating": 3,
+      "description": "Identify and reassemble split string literals into their original form.",
+      "strategies": [
+        "join analysis",
+        "chunk pattern recognition",
+        "flattening"
+      ],
+      "llm_prompt": "Task:\nReassemble split string literals by combining substrings into a single value.\nConstraints:\n- Reconstruct using inferred chunk order.\n- Replace join operations with final string.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+    },
+    {
+      "name": "Control Flow Flattening Reversal",
+      "reverse_of": "Control Flow Insertion",
+      "applicability": ["python", "javascript"],
+      "complexity_rating": 7,
+      "description": "Flatten and simplify artificially complex control flows while preserving semantics.",
+      "strategies": [
+        "CFG simplification",
+        "loop unrolling",
+        "redundant branch collapsing"
+      ],
+      "llm_prompt": "Task:\nSimplify artificially inserted control flow structures while preserving logic.\nConstraints:\n- Remove unnecessary conditionals, loops, or switches.\n- Keep only essential control logic.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+    },
+    {
+      "name": "Function Inlining",
+      "reverse_of": "Function Outlining",
+      "applicability": ["python", "javascript"],
+      "complexity_rating": 5,
+      "description": "Inline trivial helper functions into main logic to restore coherence and reduce fragmentation.",
+      "strategies": [
+        "function call substitution",
+        "constant folding",
+        "inline simplification"
+      ],
+      "llm_prompt": "Task:\nInline trivial helper functions back into the main code to simplify structure.\nConstraints:\n- Preserve execution order and semantics.\n- Replace function calls with their direct logic when safe.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+    },
+    {
+      "name": "Boolean Simplification",
+      "reverse_of": "Boolean Obfuscation",
+      "applicability": ["python", "javascript"],
+      "complexity_rating": 3,
+      "description": "Simplify overcomplicated boolean expressions into logically equivalent minimal forms.",
+      "strategies": ["truth table generation", "boolean algebra reduction"],
+      "llm_prompt": "Task:\nSimplify boolean expressions by eliminating redundant or convoluted logic.\nConstraints:\n- Do not change the outcome of any condition.\n- Reduce each expression to its most minimal equivalent.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+    },
+    {
+      "name": "Alias Resolution",
+      "reverse_of": "Identifier Aliasing",
+      "applicability": ["python", "javascript"],
+      "complexity_rating": 4,
+      "description": "Detect aliases and restore original identifiers or consolidate duplicates.",
+      "strategies": ["alias mapping", "symbol tracing", "usage frequency"],
+      "llm_prompt": "Task:\nResolve identifier aliases and replace them with their canonical or original names.\nConstraints:\n- Use context to determine most likely true names.\n- Merge aliases where appropriate.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+    },
+    {
+      "name": "Code Beautification",
+      "reverse_of": "Minification",
+      "applicability": ["javascript"],
+      "complexity_rating": 2,
+      "description": "Format minified or compressed code into a readable structure with spacing, indentation, and expanded variable names.",
+      "strategies": [
+        "prettifying tools",
+        "token spacing",
+        "semantic formatting"
+      ],
+      "llm_prompt": "Task:\nBeautify the following minified {{language}} code for improved readability.\nConstraints:\n- Add appropriate whitespace and indentation.\n- Expand short variable names to more descriptive ones based on usage.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+    }
+  ]
+}

@@ -70,8 +70,9 @@ def obfuxtreme_finalizer(code: str,language: str) -> str:
 
 @CrewBase
 class ObfuscationDeobfuscationCrew:
-    def __init__(self, tasks_path='config/tasks.yaml', extension='js'):
+    def __init__(self, tasks_path='config/tasks.yaml', extension='js', operation='obfuscate'):
         self.extension = extension
+        self.operation = operation
 
         # Local yaml loader
         def load_yaml(path):
@@ -85,6 +86,12 @@ class ObfuscationDeobfuscationCrew:
         for task_key, task_val in self.tasks_config.items():
             if isinstance(task_val, dict) and 'output_file' in task_val:
                 task_val['output_file'] = task_val['output_file'].replace('{extension}', self.extension)
+                
+    def detect_operation(self) -> str:
+        # This assumes kickoff(inputs=...) always has "operation" key
+        return self.operation if hasattr(self, 'operation') else 'obfuscate'
+               
+                
     @agent
     def input_parser(self) -> Agent:
         return Agent(
@@ -154,6 +161,15 @@ class ObfuscationDeobfuscationCrew:
             tools=[obfuxtreme_finalizer],
             verbose=True,
             allow_delegation=False,
+        )
+        
+    @agent
+    def deobfuscation_llm(self) -> Agent:
+        return Agent(
+            config=self.agents_config['deobfuscation_llm'],  # Add in agents.yaml
+            verbose=True,
+            max_execution_time=300,
+            max_retry_limit=3,
         )
 
     @task
@@ -244,9 +260,62 @@ class ObfuscationDeobfuscationCrew:
             context=[self.final_obfuscation_task(), self.input_analysis_task()],
             output_file=self.tasks_config['apply_obfuxtreme_protection']['output_file'],
         )
+        
+    @task
+    def code_deobfuscation_task(self) -> Task:
+        return Task(
+            description=self.tasks_config['code_deobfuscation_task']['description'],
+            expected_output=self.tasks_config['code_deobfuscation_task']['expected_output'],
+            agent=self.deobfuscation_llm(),
+            context=[self.input_analysis_task()],  # can expand this later
+            output_file=self.tasks_config['code_deobfuscation_task']['output_file'],
+        )
 
     @crew
     def crew(self) -> Crew:
+        if self.extension not in ["py", "js"]:
+            raise ValueError(f"Unsupported extension: {self.extension}")
+
+        operation = self.detect_operation()  
+        
+        if operation == "obfuscate":
+            self.agents = [
+                self.input_parser(),
+                self.complexity_analyzer(),
+                self.technique_selector(),
+                self.obfuscation_llm(),
+                self.execution_validator(),
+                self.semantic_equivalence_validator(),
+                self.feedback_loop_agent(),
+                self.obfuxtreme_agent()
+            ]
+
+            self.tasks = [
+                self.input_analysis_task(),
+                self.code_complexity_analysis_task(),
+                self.technique_selection_task(),
+                self.code_obfuscation_task(),
+                self.excecution_validator_task(),
+                self.semantic_equivalence_test_task(),
+                self.feedback_loop_task(),
+                self.final_obfuscation_task(),
+                self.apply_obfuxtreme_protection()
+            ]
+
+        elif operation == "deobfuscate":
+            self.agents = [
+                self.input_parser(),
+                self.deobfuscation_llm(),
+            ]
+
+            self.tasks = [
+                self.input_analysis_task(),
+                self.code_deobfuscation_task()
+            ]
+
+        else:
+            raise ValueError(f"Unsupported operation: {operation}")
+
         return Crew(
             agents=self.agents,
             tasks=self.tasks,

@@ -7,12 +7,11 @@ import warnings
 from pathlib import Path
 from datetime import datetime
 from obfuscation_deobfuscation_crew.crew import ObfuscationDeobfuscationCrew
-from models_obf_result.controller import copy_outputs
-from obfuscation_deobfuscation_crew.config import config
-from obfuscation_deobfuscation_crew.utils.utils import remove_first_and_last_line
+from models_obf_result.controller import copy_clean_outputs, get_file_extension
 
 
 warnings.filterwarnings("ignore", category=SyntaxWarning, module="pysbd")
+
 
 # Calculate root path
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent
@@ -47,12 +46,21 @@ def choose_input_file():
         else:
             print("[!] Invalid choice. Please select a valid letter.")
 
-def get_file_extension(file_path: str) -> str:
-    ext = Path(file_path).suffix.lower()
-    if ext in ['.py', '.js']:
-        return ext[1:]
-    else:
-        raise ValueError(f"Unsupported file extension: {ext}. Supported extensions are: .py, .js")
+def choose_operation():
+    operations = ["obfuscate", "deobfuscate"]
+    print("\n[+] Available operations:")
+    for idx, operation in enumerate(operations):
+        print(f"[{idx}] {operation}")
+
+    while True:
+        choice = input("\nChoose an operation (0/1): ").strip()
+        if choice.isdigit() and int(choice) < len(operations):
+            selected_operation = operations[int(choice)]
+            print(f"[+] Selected operation: {selected_operation}")
+            return selected_operation
+        else:
+            print("[!] Invalid choice. Please select a valid number.")
+
 
 def run():
     file_path = (
@@ -60,6 +68,14 @@ def run():
         if len(sys.argv) > 2
         else choose_input_file()
     )
+    
+    
+    operation = (
+        sys.argv[3]
+        if len(sys.argv) > 3
+        else choose_operation()
+    )
+
 
     # Dynamically detect extension
     extension = get_file_extension(file_path)
@@ -68,36 +84,41 @@ def run():
     with open(file_path, "r", encoding="utf-8") as f:
         code = f.read()
 
-    techniques_path = ROOT_DIR / "src" / "obfuscation_deobfuscation_crew" / "config" / "obfuscation_techniques.json"
+    if operation == "obfuscate":
+        techniques_path = ROOT_DIR / "src" / "obfuscation_deobfuscation_crew" / "config" / "obfuscation_techniques.json"
+    elif operation == "deobfuscate":
+        techniques_path = ROOT_DIR / "src" / "obfuscation_deobfuscation_crew" / "config" / "deobfuscation_techniques.json" 
+
+    if not techniques_path.exists():
+        print(f"[!] Warning: {techniques_path} does not exist. Please check the path.")
+        sys.exit(1)
+    
     with open(techniques_path, "r", encoding="utf-8") as f:
         techniques = json.load(f)
 
-    # Choose tasks.yaml dynamically
-    tasks_file = ROOT_DIR / "src" / "obfuscation_deobfuscation_crew" / "config" / f"tasks_{extension}.yaml"
-    if not tasks_file.exists():
-        tasks_file = ROOT_DIR / "src" / "obfuscation_deobfuscation_crew" / "config" / "tasks.yaml"
+    tasks_file = ROOT_DIR / "src" / "obfuscation_deobfuscation_crew" / "config" / "tasks.yaml"
 
     inputs = {
         'code': code,
-        'obfuscation_techniques': techniques,
         'file_path': file_path,
         'extension': extension,
+        'operation': operation,
     }
+    
+    if operation == "obfuscate":
+        inputs['obfuscation_techniques'] = techniques
+    elif operation == "deobfuscate":
+        inputs['deobfuscation_techniques'] = techniques
+    
+    print(f"[+] Inputs for crew: {inputs}")
+    
+ 
 
     try:
-        crew = ObfuscationDeobfuscationCrew(tasks_path=str(tasks_file),extension=extension)
+        crew = ObfuscationDeobfuscationCrew(tasks_path=str(tasks_file),extension=extension,operation=operation)
         result = crew.crew().kickoff(inputs=inputs)
-        print("Crew execution result:", result)
-
-        if extension == "py":
-            python_output_path = OUTPUT_DIR / config["PYTHON_OUTPUT_FILE_PATH"]
-            if python_output_path.exists():
-                remove_first_and_last_line(str(python_output_path))
-            else:
-                print(f"[!] Warning: {python_output_path} does not exist. Skipping remove_first_and_last_line.")
-
-        copy_outputs(extension=f".{extension}")
-
+        print("Crew execution result:", result)            
+        copy_clean_outputs(inputFile=file_path)
     except Exception as e:
         raise Exception(f"An error occurred while running the crew: {e}")
 

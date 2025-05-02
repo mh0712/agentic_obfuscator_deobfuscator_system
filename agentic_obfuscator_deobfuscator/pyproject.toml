@@ -5,11 +5,12 @@ description = "Obfuscation-deobfuscation crew using CrewAI"
 authors = [{ name = "Your Name", email = "you@example.com" }]
 requires-python = ">=3.10,<3.13"
 dependencies = [
+    "astor>=0.8.1",
     "bandit>=1.8.3",
     "crewai[tools]>=0.114.0,<1.0.0",
     "pycryptodome>=3.22.0",
     "python-box>=7.3.2",
-    "python-magic>=0.4.27",  # Corrected! Replaced python-magic-bin
+    "python-magic>=0.4.27", # Corrected! Replaced python-magic-bin
     "radon>=5.1.0",
     "z3-solver>=4.14.1.0",
 ]

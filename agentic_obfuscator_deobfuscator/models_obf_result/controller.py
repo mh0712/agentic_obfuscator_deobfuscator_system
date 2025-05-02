@@ -1,6 +1,8 @@
 import os
 import shutil
 from dotenv import load_dotenv
+from pathlib import Path
+from obfuscation_deobfuscation_crew.utils.utils import clean_output_file
 
 # Load environment variables from .env file
 load_dotenv()
@@ -23,28 +25,27 @@ def get_unique_folder_name(base_name: str, parent_dir: str) -> str:
             return new_path
         counter += 1
 
+def get_file_extension(file_path: str) -> str:
+    ext = Path(file_path).suffix.lower()
+    if ext in ['.py', '.js']:
+        return ext[1:]
+    else:
+        raise ValueError(f"Unsupported file extension: {ext}. Supported extensions are: .py, .js")
 
-def copy_outputs(extension: str = ".py") -> None:
+
+def copy_clean_outputs(inputFile) -> None:
+    extension =  get_file_extension(inputFile)
     
-    INPUT_FILES_TO_COPY = [  
-        f"example{extension}",
-     ]
-    
-    OUTPUT_FILES_TO_COPY = [
+    OUTPUT_FILES_TO_COPY = [     
         "complexity_analysis_output.json",
         "selected_techniques.json",
+        "execution_validation_result.json",
+        "semantic_equivalence_result.json",
         "feedback_loop_result.json",
-        "execution_validator_result.json",
-        "unit_test_comparison_result.json",
-        "unit_test_results.json",
-        "technique_selection_result.yaml",
-        "semantic_validation_result.json",
-        "execution_comparison_result.json",
-        f"obfuscated{extension}",
-        f"obfuscated_code{extension}",
-        f"obfuscated_final{extension}",
-        f"final_obfuscated_code{extension}",
-        f"corrected_obfuscated_code{extension}",
+        f"obfuscated_code.{extension}",
+        f"corrected_obfuscated_code.{extension}",
+        f"obfuscated_final.{extension}",
+        f"deobfuscated_code.{extension}",
     ]
 
 
@@ -59,18 +60,17 @@ def copy_outputs(extension: str = ".py") -> None:
     os.makedirs(output_folder, exist_ok=True)
 
     # Handle input files
-    for filename in INPUT_FILES_TO_COPY:
-        source_path = os.path.join(ROOT_DIR, "input", filename)
-        if os.path.exists(source_path):
-            shutil.copy(source_path, os.path.join(output_folder, filename))
-            print(f"[+] Copied input file {filename} to {output_folder}")
-        else:
-            print(f"[!] Warning: Input file {filename} not found in input/ folder.")
+    if (os.path.exists(inputFile)):
+        shutil.copy(inputFile, os.path.join(output_folder, os.path.basename(inputFile)))
+        print(f"[+] Copied input file {os.path.basename(inputFile)} to {output_folder}")
+    else:
+        print(f"[!] Warning: Input file {os.path.basename(inputFile)} not found in input/ folder.")
 
     # Handle output files
     for filename in OUTPUT_FILES_TO_COPY:
         source_path = os.path.join(ROOT_DIR, "output", filename)
         if os.path.exists(source_path):
+            clean_output_file(str(source_path))
             shutil.move(source_path, os.path.join(output_folder, filename))
             print(f"[+] Moved output file {filename} to {output_folder}")
         else:

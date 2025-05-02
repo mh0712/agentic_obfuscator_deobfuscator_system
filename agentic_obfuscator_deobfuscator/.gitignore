@@ -64,6 +64,7 @@ models_obf_result/*
 complexity_analysis_output.json
 *.json
 !obfuscation_techniques.json
+!deobfuscation_techniques.json
 
 corrected_obfuscated_code*
 obfuscated_code*

@@ -242,3 +242,24 @@ apply_obfuxtreme_protection:
   agent: obfuxtreme_agent
   output_file: output/obfuscated_final.{extension}
 
+code_deobfuscation_task:
+  description: |
+    Your task is to reverse known obfuscation techniques and restore the original intent and readability of the provided code.
+    You will use the following input:
+    - {code}: The obfuscated code.
+    - {deobfuscation_techniques}: A structured list of known obfuscation patterns and how to reverse them.
+
+    Follow these steps:
+    1. **Analyze Structure**: Identify applied obfuscation techniques such as variable renaming, string encryption, dead code, etc.
+    2. **Apply Reverse Techniques**: For each detected pattern, apply the matching deobfuscation method based on the JSON rules provided.
+    3. **Preserve Behavior**: Ensure the output code is functionally equivalent to the original obfuscated input.
+    4. **Restore Readability**: Use meaningful variable names, simplify boolean logic, reassemble split strings, and remove dead logic.
+
+    Do not simplify code beyond its original semantics — the goal is readability and maintainability, not refactoring.
+
+  expected_output: |
+    <code>
+    # The cleaned, readable, and semantically equivalent version of the original obfuscated code.
+    </code>
+  agent: deobfuscation_llm
+  output_file: output/deobfuscated_code.{extension}
