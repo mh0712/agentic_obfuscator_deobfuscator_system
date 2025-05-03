@@ -171,6 +171,16 @@ class ObfuscationDeobfuscationCrew:
             max_execution_time=300,
             max_retry_limit=3,
         )
+    
+    @agent
+    def syntax_repair_agent(self) -> Agent:
+        return Agent(
+            config=self.agents_config['syntax_repair_agent'],
+            verbose=True,
+            max_execution_time=180,
+            max_retry_limit=2,
+        )
+
 
     @task
     def input_analysis_task(self) -> Task:
@@ -270,6 +280,17 @@ class ObfuscationDeobfuscationCrew:
             context=[self.input_analysis_task()],  # can expand this later
             output_file=self.tasks_config['code_deobfuscation_task']['output_file'],
         )
+    
+    @task
+    def syntax_repair_task(self) -> Task:
+        return Task(
+            description="Repair syntactically malformed or incomplete code blocks produced during deobfuscation. Ensure the code is valid and complete.",
+            expected_output="Cleaned code that is syntactically valid and executable.",
+            agent=self.syntax_repair_agent(),
+            context=[self.code_deobfuscation_task()],
+            output_file=f"output/syntax_repair_output.{self.extension}"
+        )
+
 
     @crew
     def crew(self) -> Crew:
@@ -306,11 +327,13 @@ class ObfuscationDeobfuscationCrew:
             self.agents = [
                 self.input_parser(),
                 self.deobfuscation_llm(),
+                self.syntax_repair_agent()
             ]
 
             self.tasks = [
                 self.input_analysis_task(),
-                self.code_deobfuscation_task()
+                self.code_deobfuscation_task(),
+                self.syntax_repair_task()
             ]
 
         else:

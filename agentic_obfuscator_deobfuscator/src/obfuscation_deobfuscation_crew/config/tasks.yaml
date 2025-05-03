@@ -263,3 +263,23 @@ code_deobfuscation_task:
     </code>
   agent: deobfuscation_llm
   output_file: output/deobfuscated_code.{extension}
+  
+syntax_repair_task:
+  description: |
+    After initial deobfuscation, this task ensures that the code is **syntactically valid and complete**.
+    It analyzes potentially malformed or incomplete fragments resulting from string decoding, reconstruction, or transformation steps.
+    
+    Steps:
+    1. **Detect Syntax Issues**: Look for common issues like missing colons, incorrect indentation, broken lambdas, or invalid expressions.
+    2. **Repair Syntax**: Fix malformed definitions, incomplete blocks, and language-specific syntax violations.
+    3. **Ensure Completeness**: Ensure the code can be parsed without errors and appears logically complete.
+    
+    This is a cleanup pass designed to repair the results of layered deobfuscation and restore a valid script.
+
+  expected_output: |
+    <code>
+    # The syntactically valid and repaired version of the code.
+    </code>
+  agent: syntax_repair_agent
+  output_file: output/syntax_repair_output.{extension}
+

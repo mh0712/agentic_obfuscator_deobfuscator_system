@@ -130,6 +130,97 @@
         "semantic formatting"
       ],
       "llm_prompt": "Task:\nBeautify the following minified {{language}} code for improved readability.\nConstraints:\n- Add appropriate whitespace and indentation.\n- Expand short variable names to more descriptive ones based on usage.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+    },
+    {
+      "name": "Runtime Code Construction Detection",
+      "reverse_of": "Dynamic Execution Obfuscation",
+      "applicability": ["python", "javascript"],
+      "complexity_rating": 8,
+      "description": "Detect dynamically generated code (via eval, exec, or Function()) and extract the real logic for static analysis.",
+      "strategies": [
+        "string concatenation analysis",
+        "dynamic call pattern detection",
+        "sandboxed code execution"
+      ],
+      "llm_prompt": "Task:\nAnalyze the following {{language}} code to detect any dynamically constructed and executed code (e.g., using eval, exec, or Function()).\nConstraints:\n- Extract the generated logic.\n- Inline the reconstructed code if possible.\n- Comment or annotate dynamic behavior.\n\nInput code:\n```{{language}}\n{{code}}\n.```"
+    },
+    {
+      "name": "Runtime Code Construction Detection",
+      "reverse_of": "Dynamic Execution Obfuscation",
+      "applicability": ["python", "javascript"],
+      "complexity_rating": 8,
+      "description": "Detect dynamically generated code (via eval, exec, or Function()) and extract the real logic for static analysis.",
+      "strategies": [
+        "string concatenation analysis",
+        "dynamic call pattern detection",
+        "sandboxed code execution"
+      ],
+      "llm_prompt": "Task:\nAnalyze the following {{language}} code to detect any dynamically constructed and executed code (e.g., using eval, exec, or Function()).\nConstraints:\n- Extract the generated logic.\n- Inline the reconstructed code if possible.\n- Comment or annotate dynamic behavior.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+    },
+    {
+      "name": "Scope Rebuilding",
+      "reverse_of": "Variable Hoisting & Scattering",
+      "applicability": ["python", "javascript"],
+      "complexity_rating": 6,
+      "description": "Reorganize and flatten scattered variables and function definitions to restore logical scope and readability.",
+      "strategies": [
+        "de-hoisting",
+        "grouping related declarations",
+        "usage-based clustering"
+      ],
+      "llm_prompt": "Task:\nRebuild the scope structure of the following {{language}} code by grouping variable and function declarations closer to their point of use.\nConstraints:\n- Remove unnecessary hoisting.\n- Improve readability and coherence.\n- Preserve logic and behavior.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+    },
+    {
+      "name": "Bytecode Disassembly",
+      "reverse_of": "Code Compilation Obfuscation",
+      "applicability": ["python"],
+      "complexity_rating": 9,
+      "description": "Detect and decode obfuscated Python bytecode embedded in strings or marshaled payloads.",
+      "strategies": [
+        "marshal inspection",
+        "pyc structure parsing",
+        "use of disassembler tools"
+      ],
+      "llm_prompt": "Task:\nAnalyze the following Python code to detect and disassemble any embedded bytecode or marshaled code objects.\nConstraints:\n- Use the dis module where applicable.\n- Inline the disassembled code or summarize its behavior.\n\nInput code:\n```python\n{{code}}\n```"
+    },
+    {
+      "name": "AST Structure Diff Analysis",
+      "reverse_of": "Structural Obfuscation",
+      "applicability": ["python", "javascript"],
+      "complexity_rating": 5,
+      "description": "Compare the abstract syntax tree (AST) of obfuscated and cleaned code to evaluate transformation depth and correctness.",
+      "strategies": [
+        "AST parsing",
+        "node frequency analysis",
+        "semantic diff scoring"
+      ],
+      "llm_prompt": "Task:\nParse the following {{language}} code into an abstract syntax tree (AST) and compare it to a cleaner version to detect structural obfuscation.\nConstraints:\n- Identify major changes in control flow, function structure, and node types.\n- Summarize how deeply the structure has been transformed.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+    },
+    {
+      "name": "Syntax Repair",
+      "reverse_of": "Malformed Code Obfuscation",
+      "applicability": ["python", "javascript"],
+      "complexity_rating": 5,
+      "description": "Detect and fix syntactically incorrect code fragments that emerge from decoding or dynamic string operations.",
+      "strategies": [
+        "syntax validation and repair",
+        "completion of malformed definitions",
+        "language-specific code correction"
+      ],
+      "llm_prompt": "Task:\nReview and fix any syntactically incorrect code fragments in the following {{language}} code.\nConstraints:\n- Do not change functional intent.\n- Fix malformed definitions, missing colons, incorrect parentheses, etc.\n- Ensure the code is parsable and executable.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+    },
+    {
+      "name": "Dynamic Analysis",
+      "reverse_of": "Static Obfuscation",
+      "applicability": ["python", "javascript"],
+      "complexity_rating": 7,
+      "description": "Use dynamic analysis tools to trace execution and identify runtime behavior of obfuscated code.",
+      "strategies": [
+        "execution tracing",
+        "memory inspection",
+        "function call graphing"
+      ],
+      "llm_prompt": "Task:\nPerform dynamic analysis on the following {{language}} code to trace its execution and identify runtime behavior.\nConstraints:\n- Use appropriate tools for tracing and inspecting memory.\n- Summarize key function calls and their interactions.\n\nInput code:\n```{{language}}\n{{code}}\n```"
     }
   ]
 }
