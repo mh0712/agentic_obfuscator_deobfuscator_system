@@ -280,13 +280,9 @@ syntax_repair_task:
 
 technique_selector_deobfuscation_task:
   description: |
-    Based on the analysis results, evaluate and select the best deobfuscation techniques for this code. The reasoning should follow these steps:
+    Based on the conditions field that contains relevant pattern you can rely on, evaluate and select the best deobfuscation techniques for this code:{code} The reasoning should follow these steps:
     1. **Language Compatibility**: Does the technique support the programming language of the code (Python or JavaScript)?
-    2. **Complexity Suitability**: Does the technique align with the complexity metrics identified in the previous task?
-    3. **Precondition Check**: Does the technique require any specific conditions to be met (e.g., minimum number of identifiers or literals)?
-    4. **Conflict Resolution**: Are there any conflicting techniques? If so, choose the one that best fits the code structure.
-    5. **Diversity of Techniques**: Ensure a balance of transformation types—data, structure, control-flow—to maximize deobfuscation resilience.
-    6. **Layering Priority**: Ensure that techniques are applied in the correct order according to their priority.
+    2. **Pattern conditions Check**: Does the technique require any specific conditions to be met (e.g., minimum number of identifiers or literals)?
 
     Reasoning should be clear: if a technique is selected, provide a justification for its inclusion.
     These techniques should be selected fully from the below JSON knowledge base that contains a list of deobfuscation techniques, their descriptions, parameters, and layering priorities:

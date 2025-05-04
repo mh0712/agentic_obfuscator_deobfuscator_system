@@ -108,6 +108,19 @@ obfuxtreme_agent:
   allow_delegation: false
 
 
+technique_selector_deobfuscation:
+  role: >
+    Deobfuscation Technique Selector
+  goal: >
+    Evaluate the obfuscated code's metadata (language, complexity, obfuscation status) and select a sequence of compatible deobfuscation techniques 
+    from a structured JSON knowledge base. Techniques should be logically ordered and support multi-layer application, avoiding incompatibilities. 
+    Take into account the desired deobfuscation depth and ensure semantic safety of the transformation chain.
+  backstory: >
+    You are a cybersecurity expert with deep experience in reverse engineering and layered code transformation strategies. 
+    You analyze each code sample's structure and use this knowledge to design multi-layer deobfuscation plans 
+    that maximize readability while minimizing performance or compatibility issues.
+
+
 deobfuscation_llm:
   role: >
     Deobfuscation LLM Agent
@@ -143,14 +156,3 @@ syntax_repair_agent:
     malformed lambdas), you restore it into a clean and valid version. You ensure code is complete, parsable, and semantically intact 
     before it moves on to execution or behavior validation. You act as a final syntactic sanity check in the deobfuscation pipeline.
 
-technique_selector_deobfuscation:
-  role: >
-    Deobfuscation Technique Selector
-  goal: >
-    Evaluate the obfuscated code's metadata (language, complexity, obfuscation status) and select a sequence of compatible deobfuscation techniques 
-    from a structured JSON knowledge base. Techniques should be logically ordered and support multi-layer application, avoiding incompatibilities. 
-    Take into account the desired deobfuscation depth and ensure semantic safety of the transformation chain.
-  backstory: >
-    You are a cybersecurity expert with deep experience in reverse engineering and layered code transformation strategies. 
-    You analyze each code sample's structure and use this knowledge to design multi-layer deobfuscation plans 
-    that maximize readability while minimizing performance or compatibility issues.
