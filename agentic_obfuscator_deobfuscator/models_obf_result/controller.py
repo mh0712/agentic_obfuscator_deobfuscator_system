@@ -46,6 +46,7 @@ def copy_clean_outputs(inputFile) -> None:
         f"corrected_obfuscated_code.{extension}",
         f"obfuscated_final.{extension}",
         f"deobfuscated_code.{extension}",
+        f"selected_deobfuscation_techniques.json",
     ]
 
 

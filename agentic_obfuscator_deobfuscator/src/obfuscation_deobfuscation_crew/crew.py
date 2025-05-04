@@ -164,6 +164,13 @@ class ObfuscationDeobfuscationCrew:
         )
         
     @agent
+    def technique_selector_deobfuscation(self) -> Agent:
+        return Agent(
+            config=self.agents_config['technique_selector_deobfuscation'],
+            verbose=True,
+            allow_delegation=True,
+        )
+    @agent
     def deobfuscation_llm(self) -> Agent:
         return Agent(
             config=self.agents_config['deobfuscation_llm'],  # Add in agents.yaml
@@ -270,14 +277,23 @@ class ObfuscationDeobfuscationCrew:
             context=[self.final_obfuscation_task(), self.input_analysis_task()],
             output_file=self.tasks_config['apply_obfuxtreme_protection']['output_file'],
         )
-        
+     
+    @task
+    def technique_selector_deobfuscation_task(self) -> Task:
+        return Task(
+            description=self.tasks_config['technique_selector_deobfuscation_task']['description'],
+            expected_output=self.tasks_config['technique_selector_deobfuscation_task']['expected_output'],
+            agent=self.technique_selector_deobfuscation(),
+            context=[self.input_analysis_task(), self.code_complexity_analysis_task()],
+            output_file=self.tasks_config['technique_selector_deobfuscation_task']['output_file'],
+        )   
     @task
     def code_deobfuscation_task(self) -> Task:
         return Task(
             description=self.tasks_config['code_deobfuscation_task']['description'],
             expected_output=self.tasks_config['code_deobfuscation_task']['expected_output'],
             agent=self.deobfuscation_llm(),
-            context=[self.input_analysis_task()],  # can expand this later
+            context=[self.input_analysis_task(), self.technique_selector_deobfuscation_task()],  # can expand this later
             output_file=self.tasks_config['code_deobfuscation_task']['output_file'],
         )
     
@@ -326,12 +342,14 @@ class ObfuscationDeobfuscationCrew:
         elif operation == "deobfuscate":
             self.agents = [
                 self.input_parser(),
+                self.technique_selector_deobfuscation(),
                 self.deobfuscation_llm(),
                 self.syntax_repair_agent()
             ]
 
             self.tasks = [
                 self.input_analysis_task(),
+                self.technique_selector_deobfuscation_task(),
                 self.code_deobfuscation_task(),
                 self.syntax_repair_task()
             ]

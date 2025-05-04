@@ -244,18 +244,13 @@ apply_obfuxtreme_protection:
 
 code_deobfuscation_task:
   description: |
-    Your task is to reverse known obfuscation techniques and restore the original intent and readability of the provided code.
-    You will use the following input:
-    - {code}: The obfuscated code.
-    - {deobfuscation_techniques}: A structured list of known obfuscation patterns and how to reverse them.
+    For each selected deobfuscation technique (sorted by `layering_priority`),
+    apply it using its `llm_prompt` exactly as provided.
 
-    Follow these steps:
-    1. **Analyze Structure**: Identify applied obfuscation techniques such as variable renaming, string encryption, dead code, etc.
-    2. **Apply Reverse Techniques**: For each detected pattern, apply the matching deobfuscation method based on the JSON rules provided.
-    3. **Preserve Behavior**: Ensure the output code is functionally equivalent to the original obfuscated input.
-    4. **Restore Readability**: Use meaningful variable names, simplify boolean logic, reassemble split strings, and remove dead logic.
+    Inject the code into the `{{code}}` placeholder and use the `language` metadata if needed.
+    Process is sequential: each transformation builds on the previous one.
 
-    Do not simplify code beyond its original semantics — the goal is readability and maintainability, not refactoring.
+    Final code should be readable, equivalent, and free from obfuscation.
 
   expected_output: |
     <code>
@@ -283,3 +278,35 @@ syntax_repair_task:
   agent: syntax_repair_agent
   output_file: output/syntax_repair_output.{extension}
 
+technique_selector_deobfuscation_task:
+  description: |
+    Based on the analysis results, evaluate and select the best deobfuscation techniques for this code. The reasoning should follow these steps:
+    1. **Language Compatibility**: Does the technique support the programming language of the code (Python or JavaScript)?
+    2. **Complexity Suitability**: Does the technique align with the complexity metrics identified in the previous task?
+    3. **Precondition Check**: Does the technique require any specific conditions to be met (e.g., minimum number of identifiers or literals)?
+    4. **Conflict Resolution**: Are there any conflicting techniques? If so, choose the one that best fits the code structure.
+    5. **Diversity of Techniques**: Ensure a balance of transformation types—data, structure, control-flow—to maximize deobfuscation resilience.
+    6. **Layering Priority**: Ensure that techniques are applied in the correct order according to their priority.
+
+    Reasoning should be clear: if a technique is selected, provide a justification for its inclusion.
+    These techniques should be selected fully from the below JSON knowledge base that contains a list of deobfuscation techniques, their descriptions, parameters, and layering priorities:
+    {deobfuscation_techniques}.
+
+  expected_output: |
+    [
+      {
+        "technique_name": "Technique 1",
+        "description": "Brief explanation of the technique",
+        "parameters": {
+          "param1": value,
+          "param2": value
+        },
+        "llm_prompt": "Instruction on how to apply this technique",
+        "layering_priority": 1,
+        "metrics_score": score,
+        "reasoning": "Explanation for selecting this technique"
+      },
+      ...
+    ]
+  output_file: output/selected_deobfuscation_techniques.json
+  agent: technique_selector_deobfuscation
