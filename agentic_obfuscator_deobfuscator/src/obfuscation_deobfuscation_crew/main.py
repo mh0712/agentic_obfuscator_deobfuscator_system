@@ -15,9 +15,7 @@ def run():
     """
     Run the crew for the obfuscation task.
     """
-    file_path = sys.argv[2] if len(sys.argv) > 2 else 'C:\\Users\\celin\\Desktop\\usj\\FYP\\crew_agents\\obfuscation_deobfuscation_crew\\binary.exe'
-    # with open(file_path, 'r', encoding='utf-8') as f:
-    #     code = f.read()
+    
 
     # Load obfuscation techniques from JSON
     with open('src/obfuscation_deobfuscation_crew/config/binary_obfuscation_techniques.json', 'r', encoding='utf-8') as f:
