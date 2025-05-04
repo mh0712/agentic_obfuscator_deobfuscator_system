@@ -68,3 +68,5 @@ complexity_analysis_output.json
 corrected_obfuscated_code*
 obfuscated_code*
 obfuscated_final*
+
+ghidra_output

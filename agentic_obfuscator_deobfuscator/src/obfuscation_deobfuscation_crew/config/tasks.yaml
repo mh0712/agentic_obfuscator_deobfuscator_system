@@ -15,7 +15,9 @@ input_analysis_task:
     }
 
   agent: input_parser
-
+# =============================================================================================================================
+# ----------------------------------------------------Code Obfuscation Tasks----------------------------------------------------
+# =============================================================================================================================
 code_complexity_analysis_task:
   description: |
     Given the input code {code}, we need to assess its complexity through the following steps:
@@ -57,7 +59,6 @@ code_complexity_analysis_task:
     }
   agent: complexity_analyzer
   output_file: complexity_analysis_output.json
-
 
 technique_selection_task:
   description: |
@@ -118,7 +119,7 @@ excecution_validator_task:
 
     The task will output whether the code is syntactically correct or not, and if not, provide details about the errors found.
     In addition, The task will output whether the code executes successfully without errors or if errors are encountered during execution.
-  
+
   expected_output: |
     {
       "is_valid_syntax": true | false,
@@ -135,7 +136,6 @@ excecution_validator_task:
     }
   agent: execution_validator
   output_file: execution_validation_result.json
-
 
 semantic_equivalence_test_task:
   description: |
@@ -162,7 +162,6 @@ semantic_equivalence_test_task:
     }
   agent: semantic_equivalence_validator
   output_file: semantic_equivalence_result.json
-
 
 feedback_loop_task:
   description: |
@@ -241,4 +240,313 @@ apply_obfuxtreme_protection:
 
   agent: obfuxtreme_agent
   output_file: obfuscated_final.js
+
+# =============================================================================================================================
+# ----------------------------------------------------Binary Obfuscation Tasks-------------------------------------------------
+# =============================================================================================================================
+extraction_task:
+  name: "Binary Feature Extraction"
+  description: |
+    Extract control flow, function-level details, and instruction-level data from the binary at {binary_path} using Ghidra scripts.
+  expected_output: |
+    {
+      "functions": [
+        {
+          "name": "func_name",
+          "blocks": [
+            {
+              "start": "0x...",
+              "end": "0x...",
+              "instructions": [...],
+              "type": "entry|normal|exit",
+              "successors": [...],
+              "calls": [...]
+            }
+          ]
+        }
+      ]
+    }
+  agent: binary_analysis_agent
+
+binary_technique_plan_task:
+  name: "Obfuscation Planning"
+  description: |
+    Using  the extracted CFG and instruction-level data,
+    Choose ALL the suitable obfuscation techniques from the provided knowledge base: {obfuscation_techniques}.
+    Take all the present field values in the knowledge base fully into account not just part of them.
+    Each selected technique must include:
+    - technique_name
+    - function_name 
+    - description
+    - reasoning
+    - exampleOriginal: original code snippet
+    - exampleObfuscated: obfuscated code snippet
+    - implementationNotes: notes on how to implement the technique
+    - ghidraSample: Ghidra code snippet for the technique
+  expected_output: |
+    [
+      {
+        "technique_name": "Control Flow Flattening",
+        "description": "...",
+        "reason": "Suitable for obfuscating multi-path logic...",
+        "implementationNotes": [],
+        "ghidraSample": {
+          "javaMethod": "techniqueName",
+          "code": []
+        }
+      }
+    ]
+  output_file: selected_techniques.json
+  agent: binary_technique_planner_agent
+
+plan_binary_obfuscation_patches:
+  name: "Plan Binary Obfuscation Patch Locations"
+  description: |
+
+    **Goal**:
+    You are tasked with generating a valid and safe **patch plan** for applying binary-level obfuscation to a target executable. 
+    This plan will later be used by another agent to generate an executable Ghidra script that modifies the binary. Your plan must define **where** and **what** to patch, using only known safe memory regions.
+
+    ---
+
+    ### 🔧 Inputs
+
+    * **Binary path**: `{binary_path}`
+    * **Free memory regions** (provided as JSON by find_free_memory_tool):
+
+      * `free_memory_ge12.json`: regions ≥ 12 bytes (use these for Dead Code Insertion Techniques)
+      * `free_memory_lt12.json`: regions < 12 bytes (use these for Arithmetic Branch Replacement Techniques)
+      * `conditional_branches.json`(provided by the find_conditional_branches_tool): contains all conditional branches in the binary. Use these to identify potential replacement targets for branch replacement techniques.
+
+    * **Selected techniques**: `selected_techniques.json` given by  binary_technique_plan_task contains implementation details of the obfuscation techniques selected for this binary.
+
+    ###Requirements
+
+    1. **Use only available free memory**
+
+      * All insertions must target addresses inside the provided free memory regions.
+      * Replacements of existing code are discouraged unless the region is fully verified safe.
+
+    2.Use Pattern from the selected techniques to generate the patch plan.
+
+      * Each technique must be applied in a way that matches its description and requirements.
+      * Use the provided JSON knowledge base to ensure correct implementation.
+      * The patch plan must include all necessary operands, including registers, constants, and labels.
+
+    3. **Precision is critical**
+
+      * Instruction sizes must **exactly match** the available byte count.
+      * Use the byte-length mapping table below to determine allowable instructions.
+
+    3. **Output Format**:
+      Produce a JSON **array**. Each entry should be a complete patch plan for one technique:
+
+      ```json
+    Each element in the output array must follow this structure:
+
+    - type: (string) Name of the obfuscation technique used (e.g., "junk insertion")
+    - addresses:
+        - insert: (optional list) List of insertion patches:
+            - address: (string) Virtual address within a free memory region (e.g., "0x140001568")
+            - instructions: (list of strings) Assembly mnemonics to insert at the given address
+        - replace: (optional list) List of live instruction replacements:
+            - address: (string) Address of the original instruction to replace
+            - instruction: (string) The original instruction at that address
+            - replacement: (list of strings) New instructions that replace the original
+    - operands:
+        - registers: (list of strings) Registers used in this patch
+        - constants: (list of numbers) Constants or immediate values used
+        - labels: (list of address strings) Addresses used as control-flow targets
+    - layer: (integer) Application order index; lower numbers are applied earlier
+
+      ```
+
+    ###Critical Constraints
+
+    * **Do NOT exceed available bytes** in any memory region.
+    * **Do NOT include label names** directly in instruction strings—labels must be provided as raw addresses in the `labels` list.
+
+    ```json
+    {
+      "MOV": 3, "ADD": 3, "SUB": 3, "XOR": 3, "IMUL": 4, "CMP": 3,
+      "TEST": 3, "JMP": 5, "JE": 5, "JZ": 5, "JNE": 5, "JA": 5, "JB": 5,
+      "CALL": 5, "RET": 1, "NOP": 1, "HLT": 1, "WAIT": 1, "LOCK": 1,
+      "PUSH": 2, "POP": 2, "AND": 3, "OR": 3, "NOT": 3, "SHL": 3,
+      "SHR": 3, "SAR": 3, "ROL": 3, "ROR": 3,
+      "MOVSB": 1, "MOVSW": 1, "MOVSD": 1, "MOVSQ": 1
+    }
+    ```
+
+    * Instructions may be grouped into one insert block only if their **total byte size exactly fits** the target region.
+
+    IMPORTANT: All assembly instructions must be compatible with Ghidra’s Sleigh assembler.
+    Avoid using BYTE PTR, DWORD PTR, MOVABS, or any MASM/NASM-specific syntax.
+    Use simple forms like MOV [0xADDRESS], REGISTER or TEST [0xADDRESS], IMM.
+    Use MOV REG, IMM for immediate moves. Stick to uppercase opcodes.
+
+
+    ### Layered Obfuscation Support
+
+    Each object must specify a `"layer"` integer to define patch order:
+
+    * `0` = apply first
+    * `1` = apply after layer 0
+    * And so on...
+
+    ---
+    **Final Notes**:
+
+    * This patch plan will be used to generate **real binary patches**, so it must be:
+
+      * **Accurate**
+      * **Size-matched**
+      * **Safe**
+      * **Syntactically valid JSON**
+
+    Any invalid address, instruction, or structure may corrupt the binary.
+
+
+
+  expected_output: |
+    A JSON array where each object contains:
+      - "type": obfuscation technique name
+      - "addresses": insert/replace info, including exact VA and instructions
+      - "operands": all used registers, constants, and label targets
+      - "layer": obfuscation layer index (order)
+
+  agent: binary_patch_planner_agent
+  output_file: patch_locations.json
+
+
+apply_obfuscations_task:
+  name: "Generate Ghidra Patch Script"
+  description: |
+    Generate a Java-based Ghidra script named **ApplyObfuscationTechniques.java** (with a public class `ApplyObfuscationTechniques` extending `GhidraScript`) that applies multiple binary-level obfuscation techniques using the Ghidra scripting API. The obfuscation steps must follow the patching instructions defined in a plan provided by `plan_binary_obfuscation_patches`. The output must be only the complete source code—no comments, no explanations.
+
+    **High-Level Requirements**  
+    - A single public class named `ApplyObfuscationTechniques extends GhidraScript`.  
+    - Script must apply binary patches based on the patch plan from `plan_binary_obfuscation_patches`.  
+    - No GUI or user input.  
+    - At the end of `run()`, invoke `runScript("RenameVariablesObfuscation.java");`.  
+
+    **Setup in `run()`**  
+    1. Declare a class-level field:  
+      ```java
+      private Assembler asm;
+      ```  
+    2. Inside `run()`, initialize it once:  
+      ```java
+      asm = Assemblers.getAssembler(currentProgram);
+      ```  
+
+    **Obfuscation Methods**  
+    - Implement each obfuscation technique from the plan in its own `private void` method  
+    - if you need to use a patchInstructions function, write it this way:
+    **Helper Method**  
+    ```java
+    private void patchInstructions(String address, String[] instructions) throws Exception {
+        Address addr = toAddr(address);
+        Listing listing = currentProgram.getListing();
+        for (String instruction : instructions) {
+            asm.assemble(addr, instruction);
+            Instruction inserted = listing.getInstructionAt(addr);
+            if (inserted == null) {
+                printerr("Failed to fetch instruction at: " + addr);
+                break;
+            }
+            println("Patched at " + addr + ": " + instruction);
+            addr = addr.add(inserted.getLength());
+        }
+    }
+    ```  
+
+    **Label Usage**  
+    - Do not use label syntax in the instruction strings. To define a label, use:  
+      ```java
+      createLabel(toAddr("0x140001600"), "dispatcher_label", true);
+      ```  
+
+    **Instruction Syntax**  
+    - Use uppercase Intel-style x86-64 mnemonics (`NOP`, `MOV`, `ADD`, `CMP`, `JMP`, etc.).
+
+    **Allowed Imports Only**  
+    ```java
+    import ghidra.app.script.GhidraScript;
+    import ghidra.app.plugin.assembler.*;
+    import ghidra.program.model.address.*;
+    import ghidra.util.exception.*;
+    import ghidra.program.model.listing.*;
+    ```  
+
+    **Final Output**  
+    Output only the complete, executable Java class source code for `ApplyObfuscationTechniques.java`, including:  
+    - The `run()` method calling each obfuscation technique method and ending with `runScript(...)`.  
+    - Each obfuscation technique in its own `private void` method.  
+    - The `patchInstructions(...)` helper (Optional)
+    - No surrounding explanation or markdown—just the Java source.
+    
+
+  expected_output: |
+    The script must be a fully functional and directly executable Ghidra Java script named `ApplyObfuscationTechniques.java`. The output must include only the **entire source code**, formatted as a complete Java class—no explanations, comments, or diagnostic output:
+    ```java
+    import ghidra.app.script.GhidraScript;
+    import ghidra.app.plugin.assembler.*;
+    import ghidra.program.model.address.*;
+    import ghidra.util.exception.*;
+    import ghidra.program.model.listing.*;
+    import ghidra.util.exception.*;
+    import ghidra.program.model.listing.*;
+
+    private class ApplyObfuscationTechniques extends GhidraScript {
+        private Assembler asm;
+
+        @Override
+        public void run() throws Exception {
+            asm = Assemblers.getAssembler(currentProgram);
+           .......
+            ``` add your obfuscation techniques here ```
+            .......
+            runScript("RenameVariablesObfuscation.java");
+        }
+
+        private void insertDeadCode() throws Exception {
+            .....
+        }
+
+        .......
+    }
+    ```
+
+  agent: ghidra_patch_agent
+  output_file: ghidra_scripts/ApplyObfuscationTechniques.java
+
+
+patching_task:
+  name: "Patch Transformed Binary"
+  description: |
+    First, Use Ghidra to run ApplyObfuscationTechniques.java on the binary usi
+    This will apply the bytecode transformations, reassemble the binary, and save it to:
+    C:\Users\celin\Desktop\usj\FYP\agentic_obfuscator_deobfuscator_system\agentic_obfuscator_deobfuscator\src\obfuscation_deobfuscation_crew\tools\ghidra_output\obfuscated_binary.exe
+  expected_output: |
+    Binary successfully patched and exported to obfuscated_binary.exe
+  agent: ghidra_patch_agent
+
+# semantic_validation_task:
+#   name: "Post-Obfuscation Validation"
+#   description: |
+#     Symbolically or heuristically analyze the obfuscated binary and compare with the original binary.
+#     Techniques may include:
+#     - Dynamic function call traces
+#     - Symbolic instruction equivalence
+#     - Decompiler-based comparison
+#     Provide a report indicating any semantic mismatches or functional divergence.
+#   expected_output: |
+#     {
+#       "validation_status": "Pass|Fail",
+#       "equivalence_score": 0.0 - 1.0,
+#       "issues": [
+#         { "function": "foo", "reason": "Control flow altered" }
+#       ]
+#     }
+#   agent: binary_analysis_agent
 
