@@ -2,64 +2,139 @@
   "deobfuscation_techniques": [
     {
       "name": "Variable Recovery",
-      "reverse_of": "Variable Renaming",
-      "applicability": ["python", "javascript"],
-      "complexity_rating": 3,
-      "description": "Recover meaningful variable and function names through contextual analysis and consistent usage patterns.",
-      "strategies": ["name clustering", "usage inference", "common idioms"],
-      "llm_prompt": "Task:\nDeobfuscate the following {{language}} code by renaming variables and functions to meaningful names based on context.\nConstraints:\n- Maintain functionality.\n- Use descriptive names that match usage (e.g., 'counter', 'message', 'userInput').\n- Do not modify string literals or logic.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+      "transformation_type": "deobfuscation",
+      "layering_priority": 3,
+      "conflicts_with": [],
+      "applicability": ["javascript"],
+      "conditions": {
+        "min_lines": 3
+      },
+      "complexity_rating": 10,
+      "description": "Recover meaningful variable names and restore semantic clarity in code that has been obfuscated by aggressive renaming, scope hiding, shadowing, or minification. Variable usage, purpose, and type should be inferred based on context and usage patterns.",
+      "parameters": {
+        "recover_meaningful_names": true,
+        "group_similar_usages": true,
+        "resolve_scope_shadowing": true,
+        "preserve_exact_runtime_behavior": true
+      },
+      "llm_prompt": "Task:\nYou are given an obfuscated JavaScript code with meaningless variable names, reused variable identifiers, or confusing scoping and shadowing. Your job is to **recover the original intent behind variables** by:\n\n1. **Inferring meaningful names** from:\n   - Variable values or assignments\n   - Function names and roles\n   - Literal values assigned (e.g., 'url', 'token', 'handler')\n   - Comments (if available)\n   - Context within loops, conditions, and DOM/API operations\n\n2. 🧹 **Deobfuscating misleading or reused identifiers**:\n   - Identify and rename variables with context-based names (e.g., `a` → `username`, `b` → `response`)\n   - Disambiguate shadowed variables (e.g., a local `data` inside a global `data`)\n   - Avoid name collisions and preserve scope integrity\n   - Use scoped naming where appropriate (e.g., `counter` in loop vs. `mainCounter` globally)\n\n3. **Preserving behavioral equivalence**:\n   - Do **not** change logic, flow, or runtime behavior\n   - Ensure renamed variables are consistent across references\n   - Keep functionally dynamic or reflective code safe (e.g., `window['someVar']` or `eval` references)\n\n4. **Make the code semantically meaningful and readable**:\n   - Avoid generic names like `data1`, `data2` unless unavoidable\n   - Infer domain-specific semantics where possible (e.g., if a value is assigned a URL string, consider `url`, `endpoint`, or `apiPath`)\n   - If variable's meaning is unclear, use descriptive fallbacks like `tempValue`, `intermediateResult`, `flag`, etc.\n\n---\n\n Examples:\n\n Obfuscated:\n```javascript\nvar a = 'john';\nvar b = 5;\nfunction c(d){ return d * b; }\nconsole.log(a);\n```\n Recovered:\n```javascript\nvar username = 'john';\nvar multiplier = 5;\nfunction multiply(input){ return input * multiplier; }\nconsole.log(username);\n```\n\n Obfuscated:\n```javascript\nfunction a(b){\n  var c = b + 10;\n  return c;\n}\nvar d = a(5);\n```\n Recovered:\n```javascript\nfunction addTen(number){\n  var result = number + 10;\n  return result;\n}\nvar finalValue = addTen(5);\n```\n\n Obfuscated:\n```javascript\nvar x = { a: 1, b: 2 };\nvar y = x.a + x.b;\n```\n Recovered:\n```javascript\nvar config = { retries: 1, timeout: 2 };\nvar totalWaitTime = config.retries + config.timeout;\n```\n\n Obfuscated:\n```javascript\nfunction e(e) {\n  var e = 123;\n  return e;\n}\n```\n Recovered:\n```javascript\nfunction getNumber(input) {\n  var number = 123;\n  return number;\n}\n```\n\n---\n\n Advanced Techniques to Handle:\n- Minified loops: `for(var i=0;i<n;i++){}` → `for (let index = 0; index < count; index++) {}`\n- Reused letters like `l`, `O`, `I` meant to confuse visually\n- Overloaded `var a = function a() {}` cases\n- Pattern-based inference (e.g., if var `t = new XMLHttpRequest()`, then `t` → `xhr`)\n- Deep scope tracing to detect name reuse or incorrect inference\n\n---\n\n Guidelines:\n- Always rename variables consistently throughout the scope\n- Never break runtime behavior\n- Avoid guessing too much—fallback to safe names if unsure\n- Favor descriptive names, even long ones, over unclear shorthand\n\nInput Code:\n```{{language}}\n{{code}}\n```\n"
     },
     {
-      "name": "String Decoding",
-      "reverse_of": "String Encryption",
+      "name": "String Decoding (XOR/Base64/Custom Obfuscation)",
+      "transformation_type": "deobfuscation",
+      "layering_priority": 4,
+      "conflicts_with": [],
+      "applicability": ["javascript"],
+      "conditions": {
+        "min_lines": 3
+      },
+      "complexity_rating": 10,
+      "description": "Deobfuscate and inline hidden or encoded strings that have been obfuscated using encoding mechanisms such as XOR, Base64, ROT13, percent-encoding, charCode arrays, lookup tables, or layered decoding logic. Handles custom string decoding routines used in malicious or obfuscated scripts.",
+      "parameters": {
+        "extract_decoder_function": true,
+        "evaluate_decode_calls": true,
+        "replace_encoded_strings": true,
+        "support_layered_decoding": true,
+        "preserve_behavior": true
+      },
+      "llm_prompt": "Task:\nPerform **advanced and complete deobfuscation** on obfuscated JavaScript code that uses **string encoding and decoding mechanisms** to hide readable strings. Your job is to:\n\n1. **Identify and extract any decoding functions or routines** in the code.\n   - Common examples include:\n     - `atob()` / `btoa()`\n     - Custom `decode(str)` functions\n     - `String.fromCharCode(...)/charCodeAt()` arrays\n     - XOR-based decoders\n     - ROT13-like rotations\n     - Percent-encoded strings (`%68%65%6C%6C%6F`)\n     - Base64, Hex, or other layerable encodings\n\n2.  **Analyze how the encoding/decoding logic works**:\n   - Inline or replace encoded strings with their decoded values.\n   - Track function calls and resolve variables used in decoding.\n   - If a decoder is built dynamically (e.g., through string concatenation, closures), reconstruct its logic.\n\n3. 🪄 **Decode and replace strings in-place**:\n   - Replace the use of encoded strings with **human-readable static equivalents**.\n   - If decoding depends on external input or conditions, simulate typical values or document assumptions.\n\n4.  **Support nested or layered decoding**:\n   - Handle strings that are Base64-encoded, then XORed, then re-encoded again.\n   - Unwrap decoding layers in correct order until the plaintext is fully recovered.\n\n5.  **Preserve original behavior**:\n   - Ensure the output still behaves exactly the same.\n   - Decoded strings should be statically inlined where possible, replacing decoder logic.\n\n---\n\n Examples:\n\n Obfuscated:\n```javascript\nvar s = atob('Y29uc29sZS5sb2c=');\neval(s + \"('done')\");\n```\n Deobfuscated:\n```javascript\nconsole.log('done');\n```\n\n Obfuscated:\n```javascript\nvar decode = function(x){ return x.split('').map(c => String.fromCharCode(c.charCodeAt(0)^13)).join(''); };\nvar result = decode('~}|r$');\n```\nDeobfuscated:\n```javascript\nvar result = 'test';\n```\n\n Obfuscated:\n```javascript\nvar lookup = ['r', 'e', 't', 'u', 'r', 'n'];\nvar payload = lookup.join('') + ' 5+5';\neval(payload);\n```\n Deobfuscated:\n```javascript\n(function(){ return 5+5; })();\n```\n\n Obfuscated:\n```javascript\nfunction d(x) { return decodeURIComponent(x); }\nvar secret = d('%68%74%74%70');\n```\n Deobfuscated:\n```javascript\nvar secret = 'http';\n```\n\n Obfuscated:\n```javascript\nconst x = [104, 101, 108, 108, 111];\nconst str = String.fromCharCode(...x);\n```\n Deobfuscated:\n```javascript\nconst str = 'hello';\n```\n\n---\n\nAdvanced Tricks to Detect and Handle:\n- Encoding functions built dynamically: `var f = Function('x', 'return atob(x)')`\n- XOR masks with variable keys\n- Dynamic lookup tables: `const tbl = { a: 'x', b: 'y' }; result = tbl[input]`\n- Obfuscated Base64: `'c2Ny' + 'aXB0'.replace('p', '') + '='`\n- Multiple decoders applied in sequence\n- Decoder functions that are **only built at runtime** (reconstructed from char arrays or DOM)\n- Encoded strings disguised with variable reassignments or indirect accessors\n\n---\n\n Safety Requirements:\n- Do not remove any logic if it’s necessary for decoding or runtime behavior.\n- Inline statically resolvable decoded values.\n- Leave warnings or TODOs for strings that could not be safely decoded.\n- Reconstruct behavior to **match output exactly**, even if code structure changes.\n\n---\n\n Tips:\n- Use partial evaluation to simulate decoding where needed.\n- Try decoding all known common encoding formats.\n- Inline decoded strings to simplify and clarify logic.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+    },
+    {
+      "name": "String Array Rotation",
+      "transformation_type": "data",
+      "layering_priority": 9,
+      "conflicts_with": ["String Splitting", "String Encryption"],
       "applicability": ["python", "javascript"],
-      "complexity_rating": 5,
-      "description": "Detect and decode encrypted string literals and replace them inline with plaintext values.",
-      "strategies": [
-        "static base64/XOR decoding",
-        "runtime decoder analysis",
-        "function tracing"
-      ],
-      "llm_prompt": "Task:\nIdentify encrypted or encoded string literals and replace them with their decoded plaintext equivalents.\nConstraints:\n- Decode only deterministic, reversible encodings (e.g., Base64, XOR).\n- Replace calls to decoder functions with direct strings when possible.\n- Preserve syntax and logic.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+      "conditions": {
+        "min_string_literals": 1
+      },
+      "complexity_rating": 7,
+      "description": "Rotate string arrays to obfuscate their order. The rotation can be performed with various techniques like cyclic shifts, reverse indexing, or more advanced tricks like rotating parts of the array dynamically based on conditions or computations.",
+      "parameters": {
+        "rotation_types": [
+          "cyclic",
+          "dynamic_condition_based",
+          "reversed_chunks"
+        ],
+        "allowed_variables_for_rotation": "index, i, j, temp, start, end",
+        "max_rotation_depth": 10
+      },
+      "llm_prompt": "Task:\nDeobfuscate the following code by identifying and undoing any rotation applied to string arrays. The rotation can be applied using different methods, including cyclic shifts, dynamic conditions, or even advanced obfuscation like rotating chunks of the array. The goal is to restore the original order of the string array elements.\n\nRotations can be complex, including:\n- Cyclic shifts (where elements of the array are moved by a fixed or variable number of positions).\n- Dynamic condition-based rotations (where the number of shifts depends on runtime conditions or functions).\n- Reversed chunk rotations (where parts of the array are rotated in reverse order).\n\nAdvanced techniques may include:\n- Using mathematical operations or variable manipulations to determine how and when to rotate.\n- Introducing conditions (e.g., `if` statements) that dictate whether or not a rotation occurs.\n- Using multiple helper variables to hide the rotation logic.\n- Using array indexing tricks such as reverse indexing or conditional reordering of segments.\n\nExample Transformations:\n\nJavaScript (Cyclic Rotation):\n```javascript\nfunction rotateArray(arr, n) {\n    const len = arr.length;\n    return arr.slice(n % len).concat(arr.slice(0, n % len));\n}\nconst arr = ['apple', 'banana', 'cherry'];\nconst rotatedArr = rotateArray(arr, 2);\nconsole.log(rotatedArr); // ['cherry', 'apple', 'banana']\n```\n\nJavaScript (Dynamic Condition-based Rotation):\n```javascript\nfunction rotateArrayWithCondition(arr) {\n    let n = 0;\n    if (arr.length > 3) {\n        n = 2;\n    }\n    return arr.slice(n).concat(arr.slice(0, n));\n}\nconst arr = ['apple', 'banana', 'cherry', 'date'];\nconst rotatedArr = rotateArrayWithCondition(arr);\nconsole.log(rotatedArr); // ['cherry', 'date', 'apple', 'banana']\n```\n\nPython (Reversed Chunk Rotation):\n```python\ndef rotate_array_chunks(arr, chunk_size):\n    for i in range(0, len(arr), chunk_size):\n        arr[i:i+chunk_size] = arr[i:i+chunk_size][::-1]\n    return arr\narr = ['apple', 'banana', 'cherry', 'date']\nrotatedArr = rotate_array_chunks(arr, 2)\nprint(rotatedArr)  # ['banana', 'apple', 'date', 'cherry']\n```\n\nInput code:\n```{{language}}\n{{code}}\n```\n"
+    },
+    {
+      "name": "String Array Deobfuscation",
+      "transformation_type": "deobfuscation",
+      "layering_priority": 2,
+      "conflicts_with": [],
+      "applicability": ["javascript"],
+      "conditions": {
+        "min_array_string_literals": 1
+      },
+      "complexity_rating": 6,
+      "description": "Detect and reverse string array-based obfuscation by resolving decoder function calls into their literal values, replacing indirect references with clear, readable strings.",
+      "parameters": {
+        "resolve_index_math": true,
+        "handle_multiple_decoders": true,
+        "detect_nested_arrays": true,
+        "fallback_behavior": "skip_unresolvable"
+      },
+      "llm_prompt": "Task:\nDeobfuscate JavaScript code that uses **string arrays with decoder functions** to obfuscate literal strings. Your goal is to identify decoder patterns and replace function calls with the corresponding plaintext strings in the abstract syntax tree (AST).\n\nThis is a **common obfuscation technique** used to hide strings by storing them in an array and retrieving them dynamically via a function with shifting/indexing logic:\n\nExample Obfuscated Code:\n```javascript\nconst _0xabc = [\"foo\", \"bar\", \"baz\"];\nfunction _0xdef(index) { return _0xabc[index - 1]; }\nconsole.log(_0xdef(2)); // prints \"bar\"\n```\n\n---\n\nApproach:\nYou must use AST traversal (Shift AST format) to detect and deobfuscate this pattern. The process consists of several stages:\n\n### 1. Detect String Arrays\nLook for array declarations where the elements are string literals. These arrays often have randomized variable names and are indexed by decoder functions.\n- Example:\n```javascript\nconst aZ1 = [\"login\", \"signup\", \"token\"];\n```\n- Edge Case: Strings may be encoded (e.g., base64, hex, XOR, Unicode Escape, String.fromCharCode, Array Mapping with Char Codes, ROT13, Caesar Cipher, URI encoding) inside the array.\n\n### 2. Identify Decoder Functions\nDecoder functions are usually simple wrappers that return an element from the array. They may use math transformations (e.g., `index - 0x1`, `index ^ 5`, `parseInt(hex)`) to shift indices.\n- Typical decoder:\n```javascript\nfunction D4(i){ return aZ1[i - 2]; }\n```\n- Advanced forms may include:\n  - Nested inside IIFEs\n  - Returned from higher-order functions\n  - Obfuscated with misleading logic\n\n### 3. Replace Decoder Calls\nOnce decoder functions are resolved, locate all function calls (e.g., `D4('0x3')`) and replace them with the correct string literal in-place in the AST.\n- Convert the hex string to number if needed\n- Apply math transformations (shift, XOR, modulo, etc.)\n- Find the corresponding string in the array\n\nReplace:\n```javascript\nconst msg = D4('0x1');\n```\nWith:\n```javascript\nconst msg = \"signup\";\n```\n\n---\n\n### Constraints:\n- Do **not** rely on variable names — obfuscators use random ones.\n- If a decoder cannot be statically resolved, **skip it gracefully** (no crashing or broken code).\n- Ensure **only safe substitutions**: do not replace if the result might be dynamic at runtime.\n- Keep the code structurally valid.\n\n---\n\n### Variants to Support:\nYou must generalize your approach to support real-world and malicious obfuscators, such as:\n- Multiple string arrays and multiple decoder functions\n- Decoder functions returned from closures or wrapped in IIFEs\n- Nested access like: `_getValue(arr[map[idx]])`\n- Encoded array contents (base64, hex, charCodes)\n- Index transformations with multiple operators: `((x ^ 3) - 5) + offset`\n- Indirect indexing from variables: `decoder(xVar - offset)`\n\n---\n\n### Tooling:\n- Use for example `shift-traverser` to traverse and mutate the AST.\n- Use `Object.assign` or `replaceNode` logic to substitute function calls with `LiteralStringExpression` nodes.\n- Consider writing helper functions to evaluate index expressions and match arrays to their decoders.\n\n---\n\n### ReAct Strategy:\n**Think step by step:**\n1. Detect all arrays made up entirely of strings.\n2. Detect all functions that return elements from those arrays.\n3. Resolve the transformation logic used in the index (hex decoding, math).\n4. Find all function calls using those decoders and replace them with the corresponding string.\n5. Skip safely when unsure.\n\nAsk yourself:\n- Is this array safe to decode?\n- Can this decoder be statically understood?\n- Can I substitute without breaking the AST?\n\n---\n\nFinal Output:\nReturn the modified AST with resolved literals replacing decoder function calls.\nThis makes the code significantly easier to analyze by both humans and machines.\n\nInput code:\n```{{language}}\n{{code}}\n```"
     },
     {
       "name": "Opaque Predicate Elimination",
-      "reverse_of": "Opaque Predicates",
-      "applicability": ["python", "javascript"],
-      "complexity_rating": 6,
-      "description": "Detect and eliminate always-true or always-false branches without affecting functionality.",
-      "strategies": [
-        "constant expression evaluation",
-        "symbolic execution",
-        "static simplification"
-      ],
-      "llm_prompt": "Task:\nSimplify control structures by eliminating opaque predicates that are always true or false.\nConstraints:\n- Identify branches with deterministic outcomes.\n- Remove dead branches and simplify logic.\n- Preserve original program behavior.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+      "transformation_type": "deobfuscation",
+      "layering_priority": 4,
+      "conflicts_with": [],
+      "applicability": ["javascript"],
+      "conditions": {
+        "min_lines": 3
+      },
+      "complexity_rating": 10,
+      "description": "Eliminate control-flow branches that are guarded by opaque predicates — conditions that always evaluate to a constant value (true or false) but are crafted to appear dynamic or undecidable to human readers and static analyzers.",
+      "parameters": {
+        "eliminate_unreachable_paths": true,
+        "evaluate_static_expressions": true,
+        "preserve_behavior": true,
+        "simplify_constant_conditions": true
+      },
+      "llm_prompt": "Task:\nYou are given JavaScript code obfuscated using **opaque predicates**. These are misleading conditionals inserted by obfuscators or malicious actors to confuse control flow. Your mission is to identify and **eliminate all opaque predicates**, **remove unreachable code**, and **simplify conditionals**, while preserving the runtime behavior.\n\n---\n\n Opaque Predicate Patterns You Should Detect:\n1. Conditions that **always evaluate to true or false** at runtime:\n   - Examples:\n     ```js\n     if (1 === 1) {...}  // always true\n     if (true && (123 > 100)) {...} // always true\n     if ((Math.random() < 0) && (true || false)) {...} // always false\n     ```\n\n2. Complex-looking but static expressions:\n   - Bitwise ops: `if ((42 & 0x2A) === 42)`\n   - Useless math: `if (((5 * 2) - 10) === 0)`\n   - Redundant logic: `if ((!!1 && true && !(false))) {...}`\n\n3. Function calls with **deterministic behavior**:\n   - Example: `function check() { return true; } if (check()) {...}`\n\n4. **Fake randomness or dynamic checks**:\n   - Used to simulate nondeterminism: `if ((Math.random() - Math.random()) === 0)`\n   - Hardcoded time checks: `if (Date.now() > 0)` → practically always true\n\n5. **Encoded expressions** that collapse to constants:\n   - Example: `if (((+!![] + []) === '1')) {...}`\n\n---\n\n Your Deobfuscation Tasks:\n1. **Detect opaque predicates** and determine if they are:\n   - Always `true` → Keep only the `if` body\n   - Always `false` → Remove the body; optionally retain `else`\n   - Part of ternary expressions, inline branches, loops, or `switch` blocks\n\n2. **Remove unreachable code blocks** guarded by false conditions\n\n3. **Simplify constant conditionals**\n   - Collapse deeply nested conditions when static\n   - Convert redundant conditions like `if (!!true)` to `if (true)` or directly inline\n\n4. **Preserve behavioral equivalence**:\n   - Do **not** remove any code unless it's strictly unreachable\n   - Ensure that any removed branches would never execute at runtime\n   - Do not eliminate functions or variables unless truly unused and dead\n\n---\n\n Examples:\n\n Obfuscated:\n```javascript\nif ((Math.pow(2, 3) === 8)) {\n  runPayload();\n} else {\n  console.log('Safe mode');\n}\n```\n Cleaned:\n```javascript\nrunPayload();\n```\n\n Obfuscated:\n```javascript\nif ((function() { return false; })()) {\n  alert('Got you!');\n}\n```\n Cleaned:\n```javascript\n// Removed unreachable block guarded by opaque false predicate\n```\n\n Obfuscated:\n```javascript\nvar a = 5;\nif (((a * 2) - 10) === 0) {\n  execute();\n}\n```\nCleaned:\n```javascript\nexecute();\n```\n\n Obfuscated:\n```javascript\nif ((Date.now() > 0)) {\n  init();\n}\n```\n Cleaned:\n```javascript\ninit();\n```\n\n Obfuscated:\n```javascript\nif ((+!![] + !![] === 2)) { doSomething(); }\n```\n Cleaned:\n```javascript\ndoSomething();\n```\n\n---\n\nAdvanced Techniques Hackers Use:\n- Inject opaque predicates that **call benign utility functions** to appear dynamic\n- Hide constants using `eval()` or `Function()` → example: `if (Function('return 1')() === 1)`\n- Nest opaque predicates to obscure flow:\n  ```javascript\n  if ((true && ((10 * 10) === 100))) {\n    if ((false || (5 > 3))) { execute(); }\n  }\n  ```\n- Use string decoding to mask the constant condition\n- Misuse of identity coercion: `if ('1' == 1 && 1 === 1)`\n- Insert `try/catch` blocks with unreachable exceptions\n\n---\n\n Guidelines:\n- Replace all constant true/false conditions with direct flow logic\n- Never remove code that could be reachable under dynamic conditions\n- Be extra careful with functions that appear to return booleans dynamically\n- Annotate all removals with comments (if applicable) for traceability\n\n---\n\nInput Code:\n```javascript\n{{code}}\n```\n"
     },
     {
       "name": "Dead Code Removal",
-      "reverse_of": "Dead Code Injection",
-      "applicability": ["python", "javascript"],
-      "complexity_rating": 4,
-      "description": "Remove non-functional code that does not contribute to program output or state.",
-      "strategies": [
-        "reachability analysis",
-        "unused function detection",
-        "constant condition evaluation"
-      ],
-      "llm_prompt": "Task:\nRemove dead or unreachable code blocks from the following {{language}} code.\nConstraints:\n- Ensure no change to runtime behavior.\n- Eliminate unused functions, unreachable branches, and no-op logic.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+      "transformation_type": "deobfuscation",
+      "layering_priority": 5,
+      "conflicts_with": [],
+      "applicability": ["javascript"],
+      "conditions": {
+        "min_lines": 3
+      },
+      "complexity_rating": 10,
+      "description": "Detect and remove dead code injected for obfuscation purposes. This includes unreachable branches, no-op conditionals, misleading operations, unused functions, and injected junk logic. The goal is to simplify the code while preserving full behavioral equivalence.",
+      "parameters": {
+        "remove_unreachable_branches": true,
+        "eliminate_unused_functions_and_vars": true,
+        "remove_junk_loops_and_blocks": true,
+        "preserve_runtime_behavior": true
+      },
+      "llm_prompt": "Task:\nYou are given an obfuscated JavaScript code that includes **dead code injected intentionally** to make analysis harder. Your mission is to:\n\n1.  **Remove all dead, unreachable, or unused code** without affecting program behavior.\n   - Remove unused variables and functions.\n   - Eliminate code that cannot be executed due to logic or control flow (e.g., after `return`, `throw`, or guarded by `if (false)`).\n   - Remove no-op loops, conditions, and fake try/catch blocks used to confuse readers.\n\n2. **Detect advanced obfuscation tricks for dead code injection**, including:\n   - Dummy functions that are declared but never called.\n   - Large switch/case constructs with unreachable or random cases.\n   - Computed branches or `if (false)`/`while(false)` blocks.\n   - Infinite or empty loops (e.g., `while(0){}` or `for(;;){break;}`) doing nothing.\n   - Redundant exception handling like `try { var a = 1; } catch (e) {}`.\n   - Callbacks or event handlers that are never registered or used.\n\n3.  **Preserve all meaningful runtime behavior**:\n   - Never remove logic that contributes to the result, DOM output, or side-effects.\n   - Keep functions that are dynamically referenced (e.g., via strings, events, or `eval`), unless provably unused.\n   - Evaluate conditions and remove dead branches confidently only when clearly static (e.g., `if (false)` or `if (0 > 1)`).\n\n4. **Simplify and clarify the code after cleanup**:\n   - Remove now-empty blocks and consolidate logic.\n   - Re-indent and format code for human readability.\n\n---\n\n Examples:\n\n Obfuscated:\n```javascript\nvar a = 123;\nfunction unusedFunc() { return 999; }\nif (false) {\n  console.log('never');\n}\nconsole.log(a);\n```\n Deobfuscated:\n```javascript\nvar a = 123;\nconsole.log(a);\n```\n\n Obfuscated:\n```javascript\nswitch (1) {\n  case 2: console.log('wrong'); break;\n  case 3: console.log('still wrong'); break;\n  default: break;\n}\nconsole.log('done');\n```\n Deobfuscated:\n```javascript\nconsole.log('done');\n```\n\n Obfuscated:\n```javascript\ntry {\n  var x = 10;\n} catch (e) {}\nconsole.log(x);\n```\n Deobfuscated:\n```javascript\nvar x = 10;\nconsole.log(x);\n```\n\n Obfuscated:\n```javascript\nfunction real() { console.log('ok'); }\nfunction dead() {}\nreal();\n```\n Deobfuscated:\n```javascript\nfunction real() { console.log('ok'); }\nreal();\n```\n\n Obfuscated:\n```javascript\nif (1 !== 1) {\n  alert('this will never run');\n} else {\n  doSomething();\n}\n```\n Deobfuscated:\n```javascript\ndoSomething();\n```\n\n---\n\n Advanced Cases to Handle:\n- Obfuscated logic like: `if ((function(){return false})()) { ... }`\n- Dead code in obfuscated IIFEs\n- Fake control flow wrappers or labeled loops with only `break`\n- Code that sets or assigns but is never read: `var z = 9; z = 10;`\n- Functions declared in unreachable blocks\n- Junk exception handlers: `try { nothing(); } catch (e) {}`\n- Deliberate misleading naming: `function important() {}` that is unused\n\n---\n\n Requirements:\n- Confirm any branch or function is truly dead before removing.\n- Ensure output still runs identically and produces the same result.\n- Inline surviving logic if possible after cleanup.\n\n---\n\n Tips:\n- Look for static truths: `if (false)`, `while (0)`, `!true`, `1 > 2`, etc.\n- Track function usage by analyzing calls and references.\n- If unsure about dynamic references (e.g. `window['dead']()`), conservatively keep it.\n- Prioritize readability after cleanup.\n\nInput code:\n```{{language}}\n{{code}}\n```"
     },
     {
       "name": "Literal Unfolding",
-      "reverse_of": "Array Folding",
-      "applicability": ["python", "javascript"],
-      "complexity_rating": 6,
-      "description": "Unfold arrays or structures used to store constants back into their literal forms.",
-      "strategies": [
-        "index trace analysis",
-        "constant propagation",
-        "value reconstruction"
-      ],
-      "llm_prompt": "Task:\nSimplify code by replacing array lookups and reconstructions with direct literal values.\nConstraints:\n- Flatten array-encoded strings or values.\n- Replace index-based access with the actual value.\n- Maintain behavior and formatting.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+      "transformation_type": "deobfuscation",
+      "layering_priority": 3,
+      "conflicts_with": [],
+      "applicability": ["javascript"],
+      "conditions": {
+        "min_lines": 3
+      },
+      "complexity_rating": 10,
+      "description": "Unfold literals that have been indirectly constructed or disguised using arrays, index lookups, functions, or arithmetic/bitwise expressions. The goal is to replace all obfuscated literals (strings, numbers, booleans, etc.) with their direct, clear representation, while preserving program behavior.",
+      "parameters": {
+        "evaluate_static_expressions": true,
+        "replace_indirect_literals": true,
+        "preserve_runtime_equivalence": true
+      },
+      "llm_prompt": "Task:\nYou are provided with JavaScript code obfuscated using **literal unfolding techniques**, where literals (e.g., strings, numbers, booleans) are not written directly but instead reconstructed via lookup tables, arithmetic, encoding, or runtime evaluation. Your task is to **unfold all such literals into their direct form**, simplifying the code while **maintaining exact behavioral equivalence**.\n\n---\n\n Obfuscation Patterns You Must Unfold:\n\n1. **Array Indirection:**\n   ```javascript\n   var _arr = ['alert', 'log', 'console'];\n   _arr[2][_arr[1]]('Hi');\n   // → console.log('Hi')\n   ```\n\n2. **Encoded Literals in Arrays or Objects:**\n   ```javascript\n   var _x = ['\\x61\\x6c\\x65\\x72\\x74'];\n   eval(_x[0] + '(\"Hi\")');\n   // → alert(\"Hi\")\n   ```\n\n3. **Arithmetic or Bitwise Construction of Numbers:**\n   ```javascript\n   var port = (0x1F4 + 0x2C); // → 540\n   ```\n\n4. **Function-Based Unfolding:**\n   ```javascript\n   function getLiteral(a, b) { return a + b; }\n   var msg = getLiteral('Hel', 'lo'); // → 'Hello'\n   ```\n\n5. **Access via Computed Indexes or Dynamic Keys:**\n   ```javascript\n   var str = ['foo', 'bar', 'baz'];\n   var key = (2 - 1);\n   console.log(str[key]); // → bar\n   ```\n\n6. **Dynamic Keyed Maps or Lookups:**\n   ```javascript\n   var _map = { 'a': 'alert', 'b': 'console' };\n   _map['b'].log('Hi');\n   // → console.log('Hi')\n   ```\n\n7. **Template String Trickery:**\n   ```javascript\n   var x = `${String.fromCharCode(97)}lert`; // → 'alert'\n   ```\n\n8. **Obfuscated String Composition:**\n   ```javascript\n   var x = [\"al\", \"ert\"].join(\"\"); // → 'alert'\n   ```\n\n9. **Self-encoded Strings in Character Maps or Base64:**\n   ```javascript\n   var encoded = \"YWxlcnQoJ0hpJyk=\";\n   eval(atob(encoded)); // → alert('Hi')\n   ```\n\n10. **Control-flow-injected unfolding:**\n    ```javascript\n    var arr = [\"Hello\", \"World\"];\n    for (var i = 0; i < arr.length; i++) {\n        show(arr[i]);\n    }\n    ```\n    Simplify if context allows (replace loop if result is predictable).\n\n---\n\n Your Goal:\n- Replace all **indirect literal expressions** with their **evaluated literal** (e.g., `'alert'`, `123`, `true`, etc.)\n- Inline evaluated array or object access where result is static\n- Remove intermediary variables used only to obfuscate literals\n- Simplify expressions built from functions or character codes\n\n---\n\n DO NOT:\n- Replace dynamic expressions (e.g., user input, external API values)\n- Evaluate anything that could vary at runtime (keep dynamic expressions intact)\n- Remove side-effecting expressions\n\n---\n\n Examples:\n\n Obfuscated:\n```javascript\nvar _s = ['log'];\nconsole[_s[0]](\"Hello\");\n```\n Cleaned:\n```javascript\nconsole.log(\"Hello\");\n```\n\n Obfuscated:\n```javascript\nvar str = ['\\x61\\x6c\\x65\\x72\\x74'];\neval(str[0] + '(\"Hello\")');\n```\n Cleaned:\n```javascript\nalert(\"Hello\");\n```\n\n Obfuscated:\n```javascript\nvar msg = String.fromCharCode(72) + 'ello';\nalert(msg);\n```\n Cleaned:\n```javascript\nalert(\"Hello\");\n```\n\n Obfuscated:\n```javascript\nvar a = atob(\"YWxlcnQoJ0hpJyk=\");\neval(a);\n```\n Cleaned:\n```javascript\nalert('Hi');\n```\n\n---\n\n Advanced Patterns To Handle:\n- Recursive function-based literal unfolding\n- Mixed encoding (charCode + base64 + joins)\n- Literals constructed inside IIFEs (Immediately Invoked Function Expressions)\n- Indirect evals from multiple intermediate variables\n- Composition via nested array lookups and substitutions\n- Multi-level substitution: array in array, dynamic in array, etc.\n\n---\n\n💡 Guidance:\n- When simplifying expressions, **always verify that the result is statically computable**\n- You may use safe static evaluation of expressions (e.g., math, index, char codes)\n- Maintain all functionality; preserve runtime equivalence\n- Use comments when replacing or removing a confusing literal for traceability\n\n---\n\nInput Obfuscated Code:\n```{{language}}\n{{code}}\n```\n"
     },
     {
       "name": "String Reassembly",
@@ -75,30 +150,45 @@
       "llm_prompt": "Task:\nReassemble split string literals by combining substrings into a single value.\nConstraints:\n- Reconstruct using inferred chunk order.\n- Replace join operations with final string.\n\nInput code:\n```{{language}}\n{{code}}\n```"
     },
     {
-      "name": "Control Flow Flattening Reversal",
-      "reverse_of": "Control Flow Insertion",
-      "applicability": ["python", "javascript"],
-      "complexity_rating": 7,
-      "description": "Flatten and simplify artificially complex control flows while preserving semantics.",
-      "strategies": [
-        "CFG simplification",
-        "loop unrolling",
-        "redundant branch collapsing"
-      ],
-      "llm_prompt": "Task:\nSimplify artificially inserted control flow structures while preserving logic.\nConstraints:\n- Remove unnecessary conditionals, loops, or switches.\n- Keep only essential control logic.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+      "name": "Control Flow Flattening",
+      "transformation_type": "control",
+      "layering_priority": 10,
+      "conflicts_with": [],
+      "applicability": ["javascript", "python"],
+      "conditions": {
+        "min_branching_statements": 1
+      },
+      "complexity_rating": 9,
+      "description": "Reconstruct natural control structures (e.g., if-else, loops) that have been flattened using dispatch tables, state machines, or conditional jumps typically introduced for obfuscation. Control flow flattening is often implemented using while(true) loops and switch/case or dictionary-based branching to obscure logical code execution paths.",
+      "parameters": {
+        "dispatch_types": [
+          "switch-case",
+          "dictionary-lookup",
+          "state-machine",
+          "jump-tables"
+        ],
+        "loop_wrappers": ["while(true)", "for(;;)", "while(condition)"],
+        "max_dispatch_depth": 5
+      },
+      "llm_prompt": "Task:\nDeobfuscate the following code by identifying and reversing control flow flattening. Flattening disguises the natural flow of control (e.g., sequential execution, branching, looping) using techniques like infinite loops with switch/case dispatches, state variables, or dictionary-based jump emulation. Your goal is to:\n\n- Reconstruct the original logical structure (if-else, for/while loops, function calls) from the flattened representation.\n- Inline simple dispatch logic and reduce jump/dispatch indirection.\n- Ensure that the deobfuscated code preserves the **same output and behavior**.\n\nThe flattened logic often uses:\n- A state variable (e.g., `state = 0`) to control branching flow.\n- A `while(true)` or infinite `for` loop to wrap all logic.\n- `switch(state)` or `dispatch[state]()` to jump to logic blocks.\n- Each logic block ends by updating the `state` or exiting the loop.\n\nBe prepared to handle obfuscated state transitions such as:\n- State variables modified conditionally (`state = cond ? 2 : 3;`).\n- Obfuscated or shuffled state values.\n- Encoded or reversed state maps.\n- Dynamic jumps using XOR/keyed expressions (e.g., `state = keys[state] ^ 0xF;`).\n- Function dictionaries with misleading or dummy entries.\n- Duplicate dummy branches or dead code.\n\n**Important**: Preserve runtime equivalence. If there is ambiguity, trace code execution paths symbolically to determine correctness. Reconstruct the cleanest form of the control logic that produces the same behavior.\n\n---\n\nExample: Flattened JavaScript Control Flow (Switch-Based)\n```javascript\nfunction obfuscated(x) {\n    var state = 0;\n    while (true) {\n        switch(state) {\n            case 0:\n                x++;\n                state = 2;\n                break;\n            case 2:\n                if (x > 10) {\n                    state = 3;\n                } else {\n                    state = 4;\n                }\n                break;\n            case 3:\n                console.log(\"Greater\");\n                return;\n            case 4:\n                console.log(\"Smaller or equal\");\n                return;\n        }\n    }\n}\n```\n\nDeobfuscated Version:\n```javascript\nfunction obfuscated(x) {\n    x++;\n    if (x > 10) {\n        console.log(\"Greater\");\n    } else {\n        console.log(\"Smaller or equal\");\n    }\n}\n```\n\n---\n\nEdge Case: Obfuscated Dispatch Using a Function Dictionary\n```javascript\nfunction f(x) {\n    const map = {\n        'a': () => { x += 3; state = 'b'; },\n        'b': () => { if (x > 10) { state = 'c'; } else { state = 'd'; } },\n        'c': () => { console.log('Big'); },\n        'd': () => { console.log('Small'); }\n    };\n    let state = 'a';\n    while (state && map[state]) map[state]();\n}\n```\n\nDeobfuscated:\n```javascript\nfunction f(x) {\n    x += 3;\n    if (x > 10) {\n        console.log('Big');\n    } else {\n        console.log('Small');\n    }\n}\n```\n\n---\n\nWhen rewriting:\n- Inline state transitions when possible.\n- Remove dummy or dead states.\n- Inline dictionary functions or cases.\n- Track variable states and condition results.\n- Use symbolic execution if needed to follow complex state transitions.\n\nInput code:\n```{{language}}\n{{code}}\n```\n"
     },
     {
       "name": "Function Inlining",
-      "reverse_of": "Function Outlining",
-      "applicability": ["python", "javascript"],
-      "complexity_rating": 5,
-      "description": "Inline trivial helper functions into main logic to restore coherence and reduce fragmentation.",
-      "strategies": [
-        "function call substitution",
-        "constant folding",
-        "inline simplification"
-      ],
-      "llm_prompt": "Task:\nInline trivial helper functions back into the main code to simplify structure.\nConstraints:\n- Preserve execution order and semantics.\n- Replace function calls with their direct logic when safe.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+      "transformation_type": "deobfuscation",
+      "layering_priority": 4,
+      "conflicts_with": [],
+      "applicability": ["javascript"],
+      "conditions": {
+        "min_functions": 2
+      },
+      "complexity_rating": 10,
+      "description": "Inline trivial or deterministic functions by replacing their calls with their equivalent code bodies where applicable, simplifying logic without changing behavior. This is especially important in deobfuscation where small functions are deliberately created to obscure actual operations (e.g., string decoders, wrappers, logic redirectors).",
+      "parameters": {
+        "evaluate_stateless_functions": true,
+        "preserve_runtime_equivalence": true,
+        "handle_nested_inlining": true
+      },
+      "llm_prompt": "Task:\nYou are given JavaScript code that uses **function wrappers and indirect function calls** as a means of obfuscation. Your objective is to perform **function inlining** — replacing these function calls with their actual implementations where it is **safe and semantically correct** to do so. This includes static functions used to wrap strings, constants, control logic, or even nested constructs.\n\n---\n\nFunction inlining is permitted **only when** the following hold:\n- The function is deterministic (no side effects or reliance on mutable external state)\n- The function can be safely evaluated or expanded statically\n- The function is invoked with constant or safely inferable arguments\n\n---\n\nObfuscation Patterns You Must Handle:\n\n1. **Trivial Wrapper Functions:**\n```javascript\nfunction getMsg() { return 'Hello'; }\nconsole.log(getMsg());\n```\nShould be transformed to:\n```javascript\nconsole.log('Hello');\n```\n\n2. **Parameterized Identity Functions:**\n```javascript\nfunction identity(x) { return x; }\nvar y = identity('data');\n```\n→\n```javascript\nvar y = 'data';\n```\n\n3. **Arithmetic Inlining:**\n```javascript\nfunction sum(a, b) { return a + b; }\nvar x = sum(2, 3);\n```\n→\n```javascript\nvar x = 5;\n```\n\n4. **Nested and Cascading Calls:**\n```javascript\nfunction decode(x) { return x.charAt(0); }\nfunction getChar() { return decode('A'); }\nalert(getChar());\n```\n→\n```javascript\nalert('A');\n```\n\n5. **Lookup Dispatcher Function:**\n```javascript\nfunction dispatcher(i) {\n  var arr = ['log', 'warn'];\n  return arr[i];\n}\nconsole[dispatcher(0)]('Message');\n```\n→\n```javascript\nconsole.log('Message');\n```\n\n6. **Function Returned from Functions:**\n```javascript\nfunction makeAdder(x) {\n  return function(y) { return x + y; }\n}\nvar add5 = makeAdder(5);\nconsole.log(add5(10));\n```\nShould be evaluated and simplified **only** if the entire function chain is fully defined and statically resolvable:\n```javascript\nconsole.log(15);\n```\n\n7. **Encoded String Resolver:**\n```javascript\nfunction getEncodedStr(idx) {\n  var arr = ['\\x61\\x6c\\x65\\x72\\x74'];\n  return arr[idx];\n}\neval(getEncodedStr(0) + '(\"Hi\")');\n```\n→\n```javascript\neval('alert(\"Hi\")');\n```\n→ ideally further deobfuscated to:\n```javascript\nalert(\"Hi\");\n```\n\n8. **Control-flow-altering functions:**\n```javascript\nfunction isTrue(x) { return x === 1; }\nif (isTrue(1)) { doSomething(); }\n```\n→\n```javascript\nif (true) { doSomething(); }\n```\n\n---\n\nYour Task:\n- Inline all eligible functions where it is statically provable that doing so will **not alter program behavior**\n- Perform **constant folding** when possible (e.g., arithmetic simplification)\n- **Preserve closures and context** for functions that reference outer variables\n- Handle nested and chained function calls in correct evaluation order\n- Replace functions only if the return value is the sole effect of the function\n- Remove function definitions after all usages have been inlined and eliminated\n\n---\n\nDo Not Inline:\n- Functions using `this`, closures, or dynamic `eval`\n- Async functions or those with internal side effects (e.g., DOM mutation, network calls)\n- Functions relying on global state or complex control flow\n- Partially evaluated or recursive functions\n\n---\n\nExample:\nInput:\n```javascript\nfunction xor(a, b) { return a ^ b; }\nvar result = xor(5, 3);\n```\nOutput:\n```javascript\nvar result = 6;\n```\n\n---\n\nAdvanced Constructs to Handle:\n- Indirect function calls via variables or arrays (e.g., `var f = decode; f('x');`)\n- IIFEs returning constant or simple expressions\n- Multi-level inlining (function returns a function that returns a value)\n- Inlined use inside ternary expressions, logical expressions, and loops\n- Obfuscator-generated wrappers with hardcoded arguments\n\n---\n\nInput Obfuscated Code:\n```{{language}}\n{{code}}\n```\n"
     },
     {
       "name": "Boolean Simplification",
@@ -132,56 +222,45 @@
       "llm_prompt": "Task:\nBeautify the following minified {{language}} code for improved readability.\nConstraints:\n- Add appropriate whitespace and indentation.\n- Expand short variable names to more descriptive ones based on usage.\n\nInput code:\n```{{language}}\n{{code}}\n```"
     },
     {
-      "name": "Runtime Code Construction Detection",
-      "reverse_of": "Dynamic Execution Obfuscation",
-      "applicability": ["python", "javascript"],
-      "complexity_rating": 8,
-      "description": "Detect dynamically generated code (via eval, exec, or Function()) and extract the real logic for static analysis.",
-      "strategies": [
-        "string concatenation analysis",
-        "dynamic call pattern detection",
-        "sandboxed code execution"
-      ],
-      "llm_prompt": "Task:\nAnalyze the following {{language}} code to detect any dynamically constructed and executed code (e.g., using eval, exec, or Function()).\nConstraints:\n- Extract the generated logic.\n- Inline the reconstructed code if possible.\n- Comment or annotate dynamic behavior.\n\nInput code:\n```{{language}}\n{{code}}\n.```"
-    },
-    {
-      "name": "Runtime Code Construction Detection",
-      "reverse_of": "Dynamic Execution Obfuscation",
-      "applicability": ["python", "javascript"],
-      "complexity_rating": 8,
-      "description": "Detect dynamically generated code (via eval, exec, or Function()) and extract the real logic for static analysis.",
-      "strategies": [
-        "string concatenation analysis",
-        "dynamic call pattern detection",
-        "sandboxed code execution"
-      ],
-      "llm_prompt": "Task:\nAnalyze the following {{language}} code to detect any dynamically constructed and executed code (e.g., using eval, exec, or Function()).\nConstraints:\n- Extract the generated logic.\n- Inline the reconstructed code if possible.\n- Comment or annotate dynamic behavior.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+      "name": "Function Rewriting (Dynamic Eval/Function Constructor)",
+      "transformation_type": "deobfuscation",
+      "layering_priority": 9,
+      "conflicts_with": [],
+      "applicability": ["javascript"],
+      "conditions": {
+        "min_lines": 5
+      },
+      "complexity_rating": 10,
+      "description": "Deobfuscate code that constructs and executes functions at runtime using `eval`, `Function`, `setTimeout(string)`, or similar mechanisms. This type of obfuscation hides the real logic until execution. Advanced attackers dynamically rewrite parts of the program using unpredictable patterns to evade static analysis.",
+      "parameters": {
+        "emulate_eval_context": true,
+        "extract_constructed_logic": true,
+        "resolve_variables_before_eval": true,
+        "preserve_semantics": true,
+        "prevent_side_effects": true,
+        "de_unicode_escapes": true
+      },
+      "llm_prompt": "Task:\nPerform **robust deobfuscation** on the following JavaScript code that uses **dynamic code generation** mechanisms such as `eval`, `Function()`, or `setTimeout(\"code\")`. These functions allow code to be created and executed at runtime, which is a common technique for hiding malicious or complex logic.\n\nYour goal is to:\n1. **Intercept and analyze all dynamic constructs**, including:\n   - `eval(some_string)`\n   - `new Function('...')`\n   - `setTimeout(\"someCode\", ...)`\n   - `document.write(\"<script>...\")`\n   - `window[\"eval\"](...)`\n   - obfuscated variants such as `var fn = Function(\"a\", \"return a+1\")`\n\n2. **Reconstruct the runtime-generated logic** into a **static form** that can be read, analyzed, and executed safely.\n   - Replace dynamic calls with actual function bodies or evaluated results **if safe to do so**.\n   - Statistically analyze and emulate the runtime environment to extract the exact evaluated code.\n\n3. **Track how the dynamic strings are built**:\n   - Handle heavy **string concatenation** (`a = 'ret' + 'urn 42'; eval(a)`)\n   - **Unicode obfuscation** (`'\\x65\\x76\\x61\\x6C'` => 'eval')\n   - **Hex/CharCode tricks** (`String.fromCharCode(114,101,116,117,114,110)`) => 'return'\n\n4. **Preserve the original behavior**:\n   - The transformed code must behave exactly the same.\n   - If emulating or reconstructing the result is unsafe or ambiguous, **flag it** clearly but try to reconstruct partial logic.\n\n---\n\n Examples:\n\n Obfuscated:\n```javascript\nvar a = \"ret\" + \"urn 42\";\neval(a);\n```\n Deobfuscated:\n```javascript\n(function() {\n  return 42;\n})();\n```\n\n Obfuscated:\n```javascript\nvar code = String.fromCharCode(99,111,110,115,111,108,101,46,108,111,103);\nvar payload = code + \"('Hacked')\";\neval(payload);\n```\n Deobfuscated:\n```javascript\nconsole.log('Hacked');\n```\n\n Obfuscated:\n```javascript\nsetTimeout(\"alert('yo')\", 100);\n```\n Deobfuscated:\n```javascript\nsetTimeout(function() {\n  alert('yo');\n}, 100);\n```\n\n Obfuscated:\n```javascript\nvar f = new Function(\"x\", \"return x + 1337\");\nconsole.log(f(3));\n```\n Deobfuscated:\n```javascript\nfunction f(x) {\n  return x + 1337;\n}\nconsole.log(f(3));\n```\n\n---\n\n Advanced Tricks to Detect and Handle:\n- `eval` disguised with variables: `var e = window['eva'+'l']; e(\"...\");`\n- Function constructor from runtime string: `new Function('return 2+2')()`\n- Split/Join eval chains:\n  ```js\n  var p = ['con', 'sole.'].join('') + 'log(\"hide\")';\n  eval(p);\n  ```\n- Double-eval: where a string builds another string, which is then evaluated.\n- **Self-rewriting functions** that modify their own code body dynamically.\n- Eval that wraps function serialization: `eval(\"(\" + functionBodyAsString + \")()\")`\n\n---\n\n Safety Requirements:\n- Never preserve or execute unsafe/injected strings.\n- Replace dangerous dynamic code with static equivalents only if fully traceable.\n- If a string can’t be fully resolved, emit a clearly marked **stub** or warning block.\n\n---\n\n Tips:\n- Use **symbolic and concrete evaluation** of strings.\n- Resolve and inline expressions when possible.\n- Decode and demangle encoding schemes (hex, octal, base64 if present).\n- Ensure the **transformed output is deterministic**, readable, and produces the **same runtime behavior**.\n\nInput Code:\n```{{language}}\n{{code}}\n"
     },
     {
       "name": "Scope Rebuilding",
-      "reverse_of": "Variable Hoisting & Scattering",
-      "applicability": ["python", "javascript"],
-      "complexity_rating": 6,
-      "description": "Reorganize and flatten scattered variables and function definitions to restore logical scope and readability.",
-      "strategies": [
-        "de-hoisting",
-        "grouping related declarations",
-        "usage-based clustering"
-      ],
-      "llm_prompt": "Task:\nRebuild the scope structure of the following {{language}} code by grouping variable and function declarations closer to their point of use.\nConstraints:\n- Remove unnecessary hoisting.\n- Improve readability and coherence.\n- Preserve logic and behavior.\n\nInput code:\n```{{language}}\n{{code}}\n```"
-    },
-    {
-      "name": "Bytecode Disassembly",
-      "reverse_of": "Code Compilation Obfuscation",
-      "applicability": ["python"],
-      "complexity_rating": 9,
-      "description": "Detect and decode obfuscated Python bytecode embedded in strings or marshaled payloads.",
-      "strategies": [
-        "marshal inspection",
-        "pyc structure parsing",
-        "use of disassembler tools"
-      ],
-      "llm_prompt": "Task:\nAnalyze the following Python code to detect and disassemble any embedded bytecode or marshaled code objects.\nConstraints:\n- Use the dis module where applicable.\n- Inline the disassembled code or summarize its behavior.\n\nInput code:\n```python\n{{code}}\n```"
+      "transformation_type": "deobfuscation",
+      "layering_priority": 5,
+      "conflicts_with": [],
+      "applicability": ["javascript"],
+      "conditions": {
+        "min_variables": 5,
+        "obfuscated_scopes": true
+      },
+      "complexity_rating": 10,
+      "description": "Rebuilds disrupted lexical scopes, unnests fake closures, restores hoisted variables/functions to appropriate levels, and flattens artificially nested blocks used to mislead control flow or data tracking. This is crucial when obfuscators insert misleading IIFEs, closures, block scoping, or variable shadowing to obscure the original structure.",
+      "parameters": {
+        "restore_lexical_scoping": true,
+        "unshadow_variables": true,
+        "flatten_fake_blocks": true,
+        "handle_nested_scopes": true
+      },
+      "llm_prompt": "Task:\nYou are given JavaScript code that has been obfuscated using **scope manipulation** and **fake lexical scoping techniques**. Your goal is to **rebuild the original scope structure** of the program. This involves:\n\n- **Flattening artificially nested scopes** (like IIFEs or block statements created to hide logic)\n- **Restoring variable and function declarations** to the scope where they logically belong\n- **Unshadowing variables** when unnecessary or misleading\n- **Merging isolated or fragmented scopes** when safe to do so\n- **Preserving exact runtime behavior** (no side effects or logic changes allowed)\n\n---\n\nCommon Obfuscation Patterns to Handle:\n\n1. **Unnecessary IIFEs**:\n```javascript\n(function() {\n  var a = 5;\n  console.log(a);\n})();\n```\n→\n```javascript\nvar a = 5;\nconsole.log(a);\n```\n\n2. **Misleading Block Nesting with let/var:**\n```javascript\n{\n  var a = 1;\n  {\n    var b = 2;\n    console.log(a + b);\n  }\n}\n```\n→\n```javascript\nvar a = 1;\nvar b = 2;\nconsole.log(a + b);\n```\n\n3. **Redundant Closures and Wrappers:**\n```javascript\nfunction outer() {\n  var x = 10;\n  return function() {\n    return x;\n  };\n}\nconsole.log(outer()());\n```\n→\n```javascript\nvar x = 10;\nconsole.log(x);\n```\n\n4. **Scope Isolation Tricks (Anti-static analysis):**\n```javascript\n(function() {\n  var _0x1a2b3c = function() {\n    return 5;\n  };\n  var result = _0x1a2b3c();\n  console.log(result);\n})();\n```\n→\n```javascript\nvar result = 5;\nconsole.log(result);\n```\n\n5. **Variable Shadowing for Confusion:**\n```javascript\nvar x = 1;\nfunction example() {\n  var x = 2;\n  console.log(x);\n}\nexample();\n```\n→\n```javascript\nvar x = 1;\nfunction example() {\n  console.log(2);\n}\nexample();\n```\n\n6. **Nested Redundant Function Definitions:**\n```javascript\nfunction wrapper() {\n  function add(a, b) {\n    return a + b;\n  }\n  return add(2, 3);\n}\n```\n→\n```javascript\nfunction add(a, b) {\n  return a + b;\n}\nvar result = add(2, 3);\n```\n\n7. **Scoped Object Mapping Obfuscation:**\n```javascript\n(function() {\n  var _map = { a: 'alert', b: 'log' };\n  window[_map.a]('hello');\n})();\n```\n→\n```javascript\nwindow.alert('hello');\n```\n\n8. **Arguments Variable Trickery:**\n```javascript\n(function() {\n  var a = arguments[0];\n  console.log(a);\n})('obf');\n```\n→\n```javascript\nvar a = 'obf';\nconsole.log(a);\n```\n\n---\n\nYour Task:\n- Analyze the scope relationships and rebuild a clean, minimal structure of global/local scope\n- Merge duplicate or redundant variable/function declarations\n- Inline constant values where functions/variables are trivially returning constants\n- Remove unnecessary scope wrappers (like IIFEs or closures created only to isolate variables)\n- Reconstruct clean top-down function ordering and variable hoisting\n\n---\n\nDo Not:\n- Change the control flow or logic execution\n- Merge scopes that contain side-effectful constructs\n- Break asynchronous/closure behavior (e.g., loops with `setTimeout`, event handlers, etc.)\n- Inline closures that reference variables outside their lexical environment\n\n---\n\nAdvanced Patterns to Handle:\n- Multi-layered closures and IIFEs\n- Obfuscated factory functions or dynamically returned scopes\n- Block scoping with conflicting `let`, `var`, and `const`\n- Inner variables referencing outer variables that are renamed or shadowed intentionally\n- Functions defined inside object literals\n\n---\n\nOutput:\nYour output should be a **clean, readable, runnable JavaScript program** that behaves identically to the obfuscated input but with restored and flattened scope structure.\n\n---\n\nInput Code:\n```{{language}}\n{{code}}\n```\n"
     },
     {
       "name": "AST Structure Diff Analysis",
@@ -198,16 +277,24 @@
     },
     {
       "name": "Syntax Repair",
-      "reverse_of": "Malformed Code Obfuscation",
-      "applicability": ["python", "javascript"],
-      "complexity_rating": 5,
-      "description": "Detect and fix syntactically incorrect code fragments that emerge from decoding or dynamic string operations.",
-      "strategies": [
-        "syntax validation and repair",
-        "completion of malformed definitions",
-        "language-specific code correction"
-      ],
-      "llm_prompt": "Task:\nReview and fix any syntactically incorrect code fragments in the following {{language}} code.\nConstraints:\n- Do not change functional intent.\n- Fix malformed definitions, missing colons, incorrect parentheses, etc.\n- Ensure the code is parsable and executable.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+      "transformation_type": "deobfuscation",
+      "layering_priority": 1,
+      "conflicts_with": [],
+      "applicability": ["javascript"],
+      "conditions": {
+        "contains_syntax_errors": true,
+        "parse_failure": true
+      },
+      "complexity_rating": 10,
+      "description": "Detects and repairs syntactically broken JavaScript code, restoring it to a valid form while preserving original semantics. This includes repairing malformed operators, brackets, escape sequences, unclosed constructs, ambiguous expressions, and breaking anti-parsing tricks. Essential for preprocessing obfuscated scripts before any further static analysis.",
+      "parameters": {
+        "repair_unbalanced_braces": true,
+        "normalize_operators": true,
+        "fix_unicode_escapes": true,
+        "recover_missing_semicolons": true,
+        "decode_invalid_constructs": true
+      },
+      "llm_prompt": "Task:\nYou are given **malformed, obfuscated JavaScript code**. Your job is to **repair its syntax** to make it valid and parsable while preserving the exact original behavior. This type of obfuscation often uses **intentional syntax breakage** to avoid static analysis.\n\n---\n\nYour Responsibilities:\n- **Fix unbalanced brackets, braces, or parentheses**\n- **Correct illegal Unicode escape sequences or broken strings**\n- **Normalize improperly used operators** (e.g., `=!`, `++()`, `|=!`) into valid JS equivalents\n- **Add missing semicolons, commas, or colons** where necessary\n- **Disambiguate confusing line breaks, function expressions, or return statements**\n- **Detect and unwrap anti-parser constructs** (like `'a' + (function(){}`\n- **Preserve runtime behavior exactly** — do not guess or change logic, just repair syntax\n\n---\n\nExamples of Syntax to Repair:\n\n1. **Broken String Escapes:**\n```javascript\nvar a = \"test\\xZZ\";\n```\n→\n```javascript\nvar a = \"test\\x5A\"; // or decode if safe\n```\n\n2. **Unterminated Blocks:**\n```javascript\nfunction() {\n  var a = 5;\n```\n→\n```javascript\nfunction anonymous() {\n  var a = 5;\n}\n```\n\n3. **Operator Confusion:**\n```javascript\nif(x==!y)\n```\n→\n```javascript\nif(x == (!y))\n```\n\n4. **Fake Syntax Errors:**\n```javascript\nvar a = { b: function() // deliberately unclosed\n```\n→\n```javascript\nvar a = {\n  b: function() {}\n};\n```\n\n5. **Injected Control Characters:**\n```javascript\nvar a = \"hel\\u000blo\";\n```\n→\n```javascript\nvar a = \"hello\"; // if safe to decode\n```\n\n6. **Unicode Misdirection:**\n```javascript\nvar 𝓽𝓮𝔁𝓽 = \"data\";\n```\n→\n```javascript\nvar text = \"data\";\n```\n\n7. **Inline IIFE with Missing Closure:**\n```javascript\n(function(){ console.log(123); // forgot closing })\n```\n→\n```javascript\n(function(){ console.log(123); })();\n```\n\n8. **Multiple Broken Constructs Combined:**\n```javascript\nvar a = function(\n  var b = 5;\n```\n→\n```javascript\nvar a = function() {\n  var b = 5;\n};\n```\n\n---\n\nHandle All of the Following:\n- Broken or missing `()`/`{}`/`[]`\n- Incorrect `=>`/`=`/`==`/`===` use\n- Function declarations with missing parameters or bodies\n- Ambiguous use of expressions in ternary operators, arrow functions, and object literals\n- Escape sequences with invalid hex/Unicode values\n- Comment abuse (`//`, `/**/`, or nested)\n- Split strings using `+` operators in awkward or unbalanced ways\n\n---\n\nCritical Instructions:\n- **Do not modify** behavior of working logic blocks — only repair malformed syntax\n- **Do not rename any variables or identifiers** unless the syntax cannot be resolved otherwise\n- Ensure the final output is **parseable JavaScript** that will execute identically to the original intent\n\n---\n\nInput Code:\n```javascript\n{{code}}\n```\n\n---\n\nOutput Code:\nReturn clean, syntactically valid JavaScript code that preserves all runtime behavior but is fully analyzable by tools and readable by humans."
     },
     {
       "name": "Dynamic Analysis",
@@ -221,6 +308,65 @@
         "function call graphing"
       ],
       "llm_prompt": "Task:\nPerform dynamic analysis on the following {{language}} code to trace its execution and identify runtime behavior.\nConstraints:\n- Use appropriate tools for tracing and inspecting memory.\n- Summarize key function calls and their interactions.\n\nInput code:\n```{{language}}\n{{code}}\n```"
+    },
+    {
+      "name": "Self-Defending Removal",
+      "transformation_type": "deobfuscation",
+      "layering_priority": 1,
+      "conflicts_with": [],
+      "applicability": ["javascript"],
+      "conditions": {
+        "uses_self_defending_code": true,
+        "detection_of_code_tampering": true,
+        "self_integrity_checks_present": true
+      },
+      "complexity_rating": 10,
+      "description": "Removes or neutralizes self-defending logic injected into JavaScript code by obfuscators like 'javascript-obfuscator' using the 'selfDefending' option. This includes runtime integrity checks, anti-tamper routines, evaluation traps, and detection of beautification or string decryption attempts.",
+      "parameters": {
+        "preserve_logic": true,
+        "disable_tamper_detection": true,
+        "no_beautification_breakage": true
+      },
+      "llm_prompt": "Task:\nYou are given a JavaScript script that has been protected using **self-defending obfuscation** — a technique that causes the script to crash, throw exceptions, or enter infinite loops when a human or tool attempts to beautify, debug, or alter it.\n\nYour job is to **neutralize the self-defending logic** so that:\n1. The **original logic and behavior is preserved** exactly.\n2. The script can be **beautified, statically analyzed, and debugged** without crashing.\n3. Any **runtime integrity checks, traps, or anti-tamper triggers** are safely removed or patched.\n\n---\n\nTypical Signs of Self-Defending Code:\n- Use of `Function('return this')()` or `Function.constructor` to inspect global context\n- Conditional traps based on `Function.toString()` inspection\n- Redundant IIFEs with integrity checks or string verification\n- Evaluation of code against its own minified source\n- Calls to `setTimeout(fn.toString(), 0)` or `eval(fn.toString())` to prevent code beautification\n- Code that checks the shape of AST-generated functions (e.g., `!function(){}` string representations)\n- Global anti-debugging and fingerprinting routines\n\n---\n\nYour Responsibilities:\n- **Identify and remove all traps** that inspect the source code string or formatting\n- **Detect and neutralize functions** that validate their own toString representation\n- **Remove anti-beautify triggers** like eval-on-stringified-function\n- **Safely patch dynamic function wrappers**, IIFEs, and redundant runtime checks\n- **Preserve all core application logic and side-effects**\n\n---\n\nExamples of Self-Defending Patterns and Their Fixes:\n\n1. **Eval Self Trap**\n```javascript\n(function(){\n  if ((function f() {}).toString().length !== 15) {\n    throw new Error(\"Tampered!\");\n  }\n})();\n```\n→\n```javascript\n// Trap removed\n(function() {})();\n```\n\n2. **toString Fingerprint Check**\n```javascript\nif (Function('return this')().console.toString().indexOf('[native code]') === -1) {\n  throw 'Debugger detected';\n}\n```\n→\n```javascript\n// Anti-debug check neutralized\nif (true) {}\n```\n\n3. **Function Constructor Trap**\n```javascript\nvar check = Function('return typeof alert').toString();\nif(check.indexOf('native code') === -1){ throw 'Anti-debug'; }\n```\n→\n```javascript\nvar check = 'function alert() { [native code] }';\n```\n\n4. **String Integrity Self-Test**\n```javascript\nvar a = function() {\n  return 'A' + 'B';\n};\nif (a.toString().indexOf('return') === -1) {\n  while(true) {}\n}\n```\n→\n```javascript\nvar a = function() {\n  return 'A' + 'B';\n};\n```\n\n5. **Self-executing Tamper Trap**\n```javascript\n(function () {\n  var x = function () {\n    return 'Protected';\n  };\n  if (x.toString().replace(/\\s+/g, '') !== 'function(){return\"Protected\";}') {\n    while (1) {}\n  }\n})();\n```\n→\n```javascript\n(function () {\n  var x = function () {\n    return 'Protected';\n  };\n})();\n```\n\n6. **Global Function Tamper Detection**\n```javascript\n(function () {\n  if (Function.prototype.toString.toString().indexOf('[native code]') === -1) {\n    throw 'tampered';\n  }\n})();\n```\n→\n```javascript\n(function () {})();\n```\n\n---\n\nCritical Instructions:\n- **Only remove logic that relates to self-integrity validation** or anti-debugging — all real functional logic must remain intact\n- **Preserve function names, call structure, and runtime output**\n- Ensure the code can now be **beautified and statically analyzed** without triggering any self-defending behaviors\n- Confirm that **the output of the deobfuscated code is identical to the original code**\n\n---\n\nInput Code:\n```javascript\n{{code}}\n```\n\n---\n\nOutput Code:\nReturn clean JavaScript code with all self-defending behaviors removed, but with the original functionality intact."
+    },
+    {
+      "name": "TransformObjectKeys Reversal",
+      "transformation_type": "deobfuscation",
+      "layering_priority": 10,
+      "conflicts_with": [],
+      "applicability": ["javascript"],
+      "conditions": {
+        "uses_computed_object_keys": true,
+        "string_literal_access_pattern": true
+      },
+      "complexity_rating": 9,
+      "description": "Reverses object key transformations applied by JavaScript obfuscators like `javascript-obfuscator` using `transformObjectKeys`. Detects and converts computed property accesses into their original static key syntax where semantically valid, improving readability and analyzability.",
+      "parameters": {
+        "inline_literals": true,
+        "preserve_semantics": true,
+        "static_key_only": true,
+        "resolve_aliases": true
+      },
+      "llm_prompt": "Task:\nYou are given JavaScript code that has been obfuscated using the **`transformObjectKeys`** technique from tools like `javascript-obfuscator`. Your job is to **reverse this transformation** by identifying object properties that have been accessed via **string-literal computed keys**, and convert them back to **static object key syntax** where it is safe and unambiguous.\n\n---\n\nYour Responsibilities:\n1. Detect object literals where properties were initialized using `obj[\"key\"] = value` or `obj[key] = value` with constant strings.\n2. Detect cases where computed string keys are accessed like:\n   - `obj[\"property\"]`\n   - `obj[\"a\" + \"b\"]`\n   - `obj[\"\\x6e\\x61\\x6d\\x65\"]` (hex-escaped)\n3. Reverse these into static key equivalents like:\n```javascript\nconst obj = {\n  property: value\n};\n```\n4. Group assignments to the same object into a literal block when safe.\n5. Maintain runtime behavior 100% — the transformed output must behave **identically** to the original code.\n6. Decode hex or unicode escape sequences in keys if necessary.\n\n---\n\nAdvanced Examples:\n\n**Example 1 – Simple Conversion:**\n```javascript\nconst obj = {};\nobj[\"name\"] = \"Alice\";\nobj[\"age\"] = 25;\n```\n→\n```javascript\nconst obj = {\n  name: \"Alice\",\n  age: 25\n};\n```\n\n**Example 2 – Escaped Keys:**\n```javascript\nconst a = {};\na[\"\\x74\\x65\\x73\\x74\"] = 123;\n```\n→\n```javascript\nconst a = {\n  test: 123\n};\n```\n\n**Example 3 – Concatenated String Keys:**\n```javascript\nconst config = {};\nconfig[\"is\" + \"Enabled\"] = true;\n```\n→\n```javascript\nconst config = {\n  isEnabled: true\n};\n```\n\n**Example 4 – Nested Objects:**\n```javascript\nconst obj = {};\nobj[\"settings\"] = {};\nobj[\"settings\"][\"theme\"] = \"dark\";\n```\n→\n```javascript\nconst obj = {\n  settings: {\n    theme: \"dark\"\n  }\n};\n```\n\n**Example 5 – Partial Recovery (dynamic keys preserved):**\n```javascript\nconst d = {};\nd[\"foo\"] = 1;\nd[someVar] = 2; // keep this as-is since the key is dynamic\n```\n→\n```javascript\nconst d = {\n  foo: 1\n};\nd[someVar] = 2;\n```\n\n---\n\nImportant:\n- Only static keys should be converted — preserve any dynamic or unknown string keys (like `obj[myVar]` or `obj[eval()]`)\n- Maintain evaluation order and code execution behavior\n- Maintain scope and variable lifetimes as in the original\n- Do **not** change runtime behavior or hoisting rules\n\n---\n\nInput Code:\n```javascript\n{{code}}\n```\n\n---\n\nOutput Code:\nReturn readable, static JavaScript code with object keys reconstructed, while guaranteeing 100% semantic equivalence with the obfuscated input."
+    },
+    {
+      "name": "UnicodeEscapeSequence Reversal",
+      "transformation_type": "deobfuscation",
+      "layering_priority": 10,
+      "applicability": ["javascript"],
+      "conditions": {
+        "contains_unicode_escape_sequences": true
+      },
+      "complexity_rating": 9,
+      "description": "Reverses obfuscation applied through Unicode escape sequences. Handles strings, identifiers, property keys, and nested structures with XXXX encoding and restores them to their readable equivalents.",
+      "parameters": {
+        "preserve_semantics": true,
+        "decode_identifiers": true,
+        "decode_string_literals": true,
+        "decode_object_keys": true,
+        "handle_nested_structures": true
+      },
+      "llm_prompt": "Task:\nYou are given a JavaScript source file where strings, identifiers, or object keys have been obfuscated using **Unicode escape sequences** like `\\u0066\\u0075\\u006e\\u0063\\u0074\\u0069\\u006f\\u006e`. Your job is to **decode all such Unicode escape sequences** across the entire program and rewrite them into human-readable, static equivalents, without changing any behavior.\n\n---\n\nYour Responsibilities:\n1. Decode all Unicode escape sequences in:\n   - Variable names (e.g., `\\u0061` → `a`)\n   - Function names, class names\n   - String literals (including template literals)\n   - Object keys — both computed (`obj[\"\\u0066oo\"]`) and static (`{\"\\u0066oo\": 1}`)\n   - Regular expressions (ensure they stay valid)\n2. Leave encoded characters intact **only if** decoding would break syntax or change behavior.\n3. Validate the output is **100% semantically equivalent** — the code should produce **exactly the same output and behavior**.\n4. If decoding a sequence results in a reserved keyword or illegal identifier (e.g., `class`, `return`, etc.), preserve the encoding or use valid renaming.\n5. Avoid decoding parts inside strings that are intentionally obfuscated and required to be encoded (e.g., secrets).\n\n---\n\nAdvanced Examples:\n\n**Example 1 – Identifiers:**\n```javascript\nconst \\u0066\\u006f\\u006f = 123;\n```\n→\n```javascript\nconst foo = 123;\n```\n\n**Example 2 – Strings:**\n```javascript\nconsole.log(\"\\u0048\\u0065\\u006c\\u006c\\u006f\");\n```\n→\n```javascript\nconsole.log(\"Hello\");\n```\n\n**Example 3 – Object Keys:**\n```javascript\nconst a = {};\na[\"\\u006e\\u0061\\u006d\\u0065\"] = \"Alice\";\n```\n→\n```javascript\nconst a = {\n  name: \"Alice\"\n};\n```\n\n**Example 4 – Nested Encodings:**\n```javascript\nconst \\u0061 = {\n  [\"\\u0062\"]: { [\"\\u0063\"]: \"\\u0064\" }\n};\n```\n→\n```javascript\nconst a = {\n  b: { c: \"d\" }\n};\n```\n\n**Example 5 – Reserved Identifier Handling:**\n```javascript\nconst \\u0072\\u0065\\u0074\\u0075\\u0072\\u006e = 42; // 'return' → reserved\n```\n→ Keep as-is or rename safely if in scope\n```javascript\nconst return_ = 42;\n```\n\n**Example 6 – Template Literals:**\n```javascript\nconst greet = `\\u0048\\u0069, \\u0077\\u006f\\u0072\\u006c\\u0064!`;\n```\n→\n```javascript\nconst greet = `Hi, world!`;\n```\n\n**Example 7 – Mixed Literals and Escapes:**\n```javascript\nconsole.log(\"User:\\u0020\" + username);\n```\n→\n```javascript\nconsole.log(\"User: \" + username);\n```\n\n---\n\nImportant Notes:\n- Decode only valid `\\uXXXX` patterns\n- Maintain behavior, control flow, scope, and identifier references\n- Avoid decoding escape sequences inside RegExp patterns or within string data that must remain obfuscated\n- Validate output by comparing functional behavior with the original\n- Output must be syntactically valid JavaScript\n\n---\n\nInput Code:\n```javascript\n{{code}}\n```\n\n---\n\nOutput Code:\nReturn the deobfuscated code with all applicable `\\uXXXX` sequences decoded. The output must retain the **exact runtime behavior** of the original script."
     }
   ]
 }
