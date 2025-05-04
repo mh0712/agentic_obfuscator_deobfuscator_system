@@ -1,0 +1,149 @@
+{
+  "techniques": [
+    {
+      "name": "Arithmetic Branch Replacement",
+      "category": "logic_substitution",
+      "priority": "medium",
+      "description": "Obfuscates conditional control flow by replacing direct conditional jumps with flag-based and arithmetic redirection.",
+      "effect": "Breaks static control flow analysis and flattens control graphs.",
+      "when_to_use": "Conditional logic with known jump targets and available free space for inserted logic.",
+      "pattern": [
+        [
+          {
+            "match": {
+              "type": "conditional_branch",
+              "instruction": "JZ",
+              "pre_instruction": "CMP REG, IMM",
+              "target": "AddressA"
+            },
+            "transform": {
+              "type": "indirect_branch",
+              "insert_at": "AddressB",
+              "instructions": [
+                "CMP REG, IMM",
+                "SETZ BL",
+                "XOR EBX, 1",
+                "MOVZX EBX, BL",
+                "MOV RSI, AddressA",
+                "MOV RDI, AddressNext",
+                "CMP BL, 0",
+                "CMOVE RSI, RDI",
+                "JMP RSI"
+              ]
+            }
+          }
+        ]
+      ],
+      "implementationNotes": [
+        "The most important thing is for you to check the conditional_branches.json file given from the condition_branches_tool and for each item you should check the property called JUMP_INSTRUCTION which will have as value something like 'JZ AddressName' the AddressName can be an actual address or a label, and the jump can be any jump method, but you should not replace the jump method, only you must replace the address value.",
+        "To replace the address value correctly, you must check the file called free_memory_ge12.json where we have data like this sample '{'start': '140001504', 'length': 12}'. The 'start' property gives the value of the starting address of the corresponding free block region where you should add the arithmetic branch obfuscation logic, and the 'length' property give the value of the available free bytes after this address so you know how much code you can write.",
+        "Now for the obfuscation to be successful you should make sure to replace the free bytes in each block in a way that redirects you to the original jump address you had from the JUMP_INSTRUCTION in the conditional_branches.json file so that we apply an indirect call with some arithmetic equations instead of obfvious CMP and JZ instruction usually written in codes.",
+        "Finally to make things clear, the flow of the arithmetic function will work like this: First you check the jump instruction to where Address it is redirecting the code, this jump function is based on a condition before it which is usually CMP, and if this condition is correct we jump and if not we don't jump and instead we go to the next instruction directly after the jump line. Then, if the jump occurs, if the original jump was to address A, instead of jumping directly to the address A we make a work around which is to make an indirect jump. This means that instead, we jump to address B which is a free starting address with X bytes available afterwards, and we now that because we found the address B in the free_memory_ge12.json file. We then write in this free block the arithmetic logic which will make us either jump to the A address or just go to the next instruction if the jump isn't applied originally",
+        "You should know that you are not allowed to replace any instruction other than the jump address value and this jump instruction should be given in the conditional_branches.json. You can't replace any jump instruction you see. Only the ones in the conditional_branches.json file.",
+        "You can write arithmetic branch obfuscation logic in free regions specified by the free_memory_ge12.json file for each location only."
+      ],
+      "ghidraSample": {
+        "javaMethod": "applyArithmeticBranchReplacement",
+        "code": [
+          "import ghidra.app.script.GhidraScript;",
+          "import ghidra.app.plugin.assembler.*;",
+          "import ghidra.program.model.address.*;",
+          "import ghidra.util.exception.*;",
+          "",
+          "// Applies arithmetic-based control flow obfuscation at the specified comparison site.",
+          "private void applyArithmeticBranchReplacement(Address cmpAddr, Address jumpTarget, Address callTarget) throws AssemblySyntaxException, Exception {",
+          "    println(\"Applying Arithmetic Branch Replacement at: \" + cmpAddr);",
+          "    ",
+          "    // Example: replaces CMP + Jcc + CALL with CMP + SETcc + arithmetic + CALL",
+          "    asm.assemble(cmpAddr, \"CMP ECX, 0x5\"); // Replace with context-specific comparison",
+          "    asm.assemble(cmpAddr.add(3), \"SETZ BL\"); // Replace SETZ/SETNE based on branch logic",
+          "    asm.assemble(cmpAddr.add(5), \"XOR EBX, 1\"); // Inverts branch outcome if needed",
+          "    asm.assemble(cmpAddr.add(8), \"MOVZX EBX, BL\");",
+          "    asm.assemble(cmpAddr.add(11), \"MOV RSI, \" + jumpTarget);",
+          "    asm.assemble(cmpAddr.add(16), \"MOV RDI, \" + callTarget);",
+          "    asm.assemble(cmpAddr.add(21), \"CMP BL, 0\");",
+          "    asm.assemble(cmpAddr.add(24), \"CMOVE RSI, RDI\");",
+          "    asm.assemble(cmpAddr.add(28), \"JMP RSI\");",
+          "    ",
+          "    println(\"Arithmetic Branch Replacement complete.\");",
+          "}"
+        ]
+      }
+    },
+    {
+      "name": "Dead Code Insertion",
+      "category": "junk",
+      "priority": "medium",
+      "description": "Injects semantically neutral instructions that do not modify program state, control flow, or output, making reverse engineering harder by introducing misleading or redundant code patterns.",
+      "effect": "Increases static analysis complexity, disrupts instruction pattern matching, and hinders emulation or symbolic execution by injecting misleading but harmless code.",
+      "when_to_use": "Apply in non-critical execution paths such as function entry/exit sequences, error handling blocks, or within unused padding or free memory regions. Avoid areas where instruction timing, register values, or flags are sensitive to correctness (e.g., syscall setup, cryptographic loops).",
+      "pattern": [
+        {
+          "type": "correlated_sequence",
+          "description": "Instructions that appear logically linked but do nothing",
+          "examples": [
+            ["xor ecx, ecx", "add ecx, 2", "sub ecx, 2"],
+            ["mov eax, 0", "or eax, eax", "test eax, eax"],
+            ["mov ebx, ebx", "add ebx, 0", "nop"]
+          ]
+        },
+        {
+          "type": "independent_fillers",
+          "description": "Standalone instructions with no real effect, used to fill space or mislead",
+          "examples": [
+            ["nop"],
+            ["mov ecx, ecx"],
+            ["add eax, 0"],
+            ["sub edi, 0"],
+            ["or ebx, 0"]
+          ]
+        },
+        {
+          "type": "mixed_fillers",
+          "description": "Mix of correlated and independent instructions to simulate pseudo-logic",
+          "examples": [
+            ["xor eax, eax", "inc eax", "dec eax", "mov eax, eax", "nop"],
+            [
+              "add esi, 0",
+              "or edx, edx",
+              "test edx, edx",
+              "nop",
+              "mov ebx, ebx"
+            ]
+          ]
+        }
+      ],
+      "implementationNotes": [
+        "Instructions inserted must not alter flags or registers used in surrounding logic.",
+        "Avoid inserting dead code between instruction sequences with strict timing or ordering (e.g., syscall setup).",
+        "Dead code is ideally mixed with real logic to obscure control flow boundaries.",
+        "XOR reg, reg is preferred to zero a register without changing flags (unless used right before a conditional jump).",
+        "NOPs are useful filler but easy to spot—mix with more 'plausible' instructions like redundant MOVs, or useless ORs.",
+        "Use block-specific heuristics to choose pattern types: epilogues prefer correlated sequences; padding prefers mixed.",
+        "You should apply the techniques given by binary_technique_plan_task.  Your task is to define **only safe patch locations** using free memory discovered by the `find_free_memory_tool`in the 'agentic_obfuscator_deobfuscatorsrcobfuscation_deobfuscation_crew\\toolsghidra_output\\free_memory_lt12.json' file, avoiding any overwrites to live instructions or data.",
+        "If you find in the free memory json for example that the free memory region is `0x140001500` with 5 bytes ({'start': '0x140001500', 'length': 5},), you should insert instructions that fit exactly into that space.",
+        "you should fill all the free memory regions given by free_memory_lt12.json  with dead code instructions."
+      ],
+      "ghidraSample": {
+        "javaMethod": "applyDeadCodeInsertion",
+        "code": [
+          "import ghidra.app.script.GhidraScript;",
+          "import ghidra.app.plugin.assembler.*;",
+          "import ghidra.program.model.address.*;",
+          "import ghidra.util.exception.*;",
+          "",
+          "// Inserts semantically neutral instructions at the given address locations.",
+          "private void applyDeadCodeInsertion(List<Address> insertPoints) throws AssemblySyntaxException, Exception {",
+          "    println(\"Applying Dead Code Insertion at selected addresses...\");",
+          "    for (Address addr : insertPoints) {",
+          "        asm.assemble(addr, \"XOR R8D, R8D\");",
+          "        asm.assemble(addr.add(2), \"ADD R8D, 2\");",
+          "        asm.assemble(addr.add(5), \"SUB R8D, 2\");",
+          "    }",
+          "    println(\"Dead Code Insertion complete.\");",
+          "}"
+        ]
+      }
+    }
+  ]
+}
