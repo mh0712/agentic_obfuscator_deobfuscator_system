@@ -11,7 +11,6 @@ dependencies = [
     "pycryptodome>=3.22.0",
     "python-box>=7.3.2",
     "python-magic>=0.4.27", # Corrected! Replaced python-magic-bin
-    "python-magic-bin>=0.4.14",
     "radon>=5.1.0",
     "z3-solver>=4.14.1.0",
 ]
