@@ -244,8 +244,8 @@ apply_obfuxtreme_protection:
 
 code_deobfuscation_task:
   description: |
-    For each selected deobfuscation technique (sorted by `layering_priority`),
-    apply it using its `llm_prompt` exactly as provided.
+    For each selected deobfuscation technique from the technique_selector_deobfuscation_task task, apply it to the obfuscated code {code} in a sequential manner.
+    apply it using its `llm_prompt` field exactly as provided.
 
     Inject the code into the `{{code}}` placeholder and use the `language` metadata if needed.
     Process is sequential: each transformation builds on the previous one.
@@ -293,14 +293,8 @@ technique_selector_deobfuscation_task:
       {
         "technique_name": "Technique 1",
         "description": "Brief explanation of the technique",
-        "parameters": {
-          "param1": value,
-          "param2": value
-        },
-        "llm_prompt": "Instruction on how to apply this technique",
-        "layering_priority": 1,
-        "metrics_score": score,
-        "reasoning": "Explanation for selecting this technique"
+        "llm_prompt": same prompt as the one in the deobfuscation_techniques JSON,
+        "reasoning": based on the conditions field that contains relevant pattern in the code, justification for selecting this technique.
       },
       ...
     ]
