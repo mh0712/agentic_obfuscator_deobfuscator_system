@@ -1,87 +1,86 @@
 ```javascript
-// A human-readable and semantically equivalent version of the original code.
-
 class BankAccount {
-  constructor(owner, balance = 0) {
-    this.owner = owner;
-    this.balance = balance;
-  }
-
-  deposit(amount) {
-    if (amount > 0) {
-      this.balance += amount;
-      console.log(`${this.owner} deposited $${amount}. New balance: $${this.balance}`);
-    } else {
-      console.log("Deposit amount must be positive.");
+    constructor(ownerName, balance = 0) {
+        this.ownerName = ownerName;
+        this.balance = balance;
     }
-  }
 
-  withdraw(amount) {
-    if (amount > 0 && amount <= this.balance) {
-      this.balance -= amount;
-      console.log(`${this.owner} withdrew $${amount}. New balance: $${this.balance}`);
-    } else if (amount > this.balance) {
-      console.log("Insufficient balance for withdrawal.");
-    } else {
-      console.log("Withdrawal amount must be positive.");
+    deposit(amount) {
+        if (amount > 0) {
+            this.balance += amount;
+            console.log(`${this.ownerName} deposited \$${amount}. New balance: \$${this.balance}`);
+        } else {
+            console.log('The deposit amount must be greater than zero.');
+        }
     }
-  }
 
-  transfer(amount, recipientAccount) {
-    if (amount > 0 && amount <= this.balance) {
-      this.withdraw(amount);
-      recipientAccount.deposit(amount);
-      console.log(`${this.owner} transferred $${amount} to ${recipientAccount.owner}.`);
-    } else {
-      console.log("Transfer failed. Insufficient balance or invalid amount.");
+    withdraw(amount) {
+        if (amount > 0 && amount <= this.balance) {
+            this.balance -= amount;
+            console.log(`${this.ownerName} withdrew \$${amount}. Remaining balance: \$${this.balance}`);
+        } else if (amount > this.balance) {
+            console.log('Withdrawal amount exceeds the current balance.');
+        } else {
+            console.log('The withdrawal amount must be greater than zero.');
+        }
     }
-  }
 
-  showDetails() {
-    console.log(`${this.owner}'s Account: $${this.balance}`);
-  }
+    transfer(amount, targetAccount) {
+        if (amount > 0 && amount <= this.balance) {
+            this.withdraw(amount);
+            targetAccount.deposit(amount);
+            console.log(`${this.ownerName} transferred \$${amount} to ${targetAccount.ownerName}.`);
+        } else {
+            console.log('Transfer failed due to insufficient funds or zero amount.');
+        }
+    }
+
+    showBalance() {
+        console.log(`${this.ownerName}\'s current balance: \$${this.balance}`);
+    }
 }
 
 class TransactionHistory {
-  constructor() {
-    this.transactions = [];
-  }
-
-  record(transaction) {
-    this.transactions.push(transaction);
-  }
-
-  showHistory() {
-    if (this.transactions.length === 0) {
-      console.log("No transactions recorded.");
-    } else {
-      console.log("Transaction History:");
-      this.transactions.forEach((transaction, index) => {
-        console.log(`${index + 1}. ${transaction}`);
-      });
+    constructor() {
+        this.history = [];
     }
-  }
+
+    addTransaction(transactionDetails) {
+        this.history.push(transactionDetails);
+    }
+
+    showAllTransactions() {
+        if (this.history.length === 0) {
+            console.log('No transactions recorded.');
+        } else {
+            console.log('Transaction History:');
+            this.history.forEach((transaction, index) => {
+                console.log(`${index + 1}. ${transaction}`);
+            });
+        }
+    }
 }
 
-// Create bank accounts for Alice and Bob
-const aliceAccount = new BankAccount("Alice", 1000);
-const bobAccount = new BankAccount("Bob", 500);
-
-// Create a transaction history
+const aliceAccount = new BankAccount('Alice', 1000);
+const bobAccount = new BankAccount('Bob', 500);
 const transactionHistory = new TransactionHistory();
 
-// Perform transactions
 aliceAccount.deposit(200);
 aliceAccount.withdraw(150);
+setInterval(function () {
+    // removed the obfuscated and self-defending debug protection logic here.
+}, 4000);
+
 bobAccount.deposit(300);
 aliceAccount.transfer(500, bobAccount);
 
-// Record transactions in history
-transactionHistory.record("Alice deposited $200");
-transactionHistory.record("Alice withdrew $150");
+transactionHistory.addTransaction('Alice deposited \$200');
+transactionHistory.addTransaction('Alice withdrew \$150');
+transactionHistory.addTransaction('Alice transferred \$500 to Bob.');
 
-// Show account details and transactions
-aliceAccount.showDetails();
-bobAccount.showDetails();
-transactionHistory.showHistory();
+aliceAccount.showBalance();
+bobAccount.showBalance();
+transactionHistory.showAllTransactions();
 ```
+
+The code is now cleaned and syntactically valid, fully executable without any syntax errors.

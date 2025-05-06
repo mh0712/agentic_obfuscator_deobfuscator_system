@@ -1,10 +1,13 @@
-Here's the cleaned and syntactically valid code:
-
 ```python
-def double_number(n):
-    return n * 2
+def fibonacci(n):
+    def fib_recursive(a, b):
+        if a < n:
+            return [a] + fib_recursive(b, a + b)
+        else:
+            return []
 
-print(double_number(100))
+    return fib_recursive(0, 1)
+
+print('\n'.join(map(str, fibonacci(100))))
 ```
-
-This code defines a function `double_number` that takes a number `n` and returns its double. The function is then called with the argument `100`, and the result is printed. This code is properly structured, executable, and maintains the original functionality desired from the deobfuscated version.
+This cleaned code is syntactically valid, complete, and retains the intended functionality of generating and printing Fibonacci numbers up to 100.

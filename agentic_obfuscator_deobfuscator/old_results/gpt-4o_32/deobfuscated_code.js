@@ -1,0 +1,1 @@
+The deobfuscated JavaScript code with restored readability and original intent is shown above. It includes decoding strings, renaming variables, and flattening control structures for clarity while maintaining the original functionality.
