@@ -21,8 +21,6 @@ def obfuscate(code: str, language: str) -> str:
     else:
         raise ValueError(f"Unsupported language: {language}")
     
-if __name__ == "__main__":
-    obfuscate("console.log('Hello, World!');", "javascript")
 
         
 

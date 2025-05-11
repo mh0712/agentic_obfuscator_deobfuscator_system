@@ -1,0 +1,335 @@
+{
+  "obfuscation_techniques": [
+    {
+      "name": "Variable Renaming",
+      "transformation_type": "structure",
+      "layering_priority": 6,
+      "conflicts_with": [],
+      "applicability": ["python", "javascript"],
+      "conditions": {
+        "min_identifiers": 3
+      },
+      "complexity_rating": 3,
+      "description": "Replace variable and function names with randomly generated strings to hinder readability and reverse engineering.",
+      "llm_prompt": {
+        "task": "Apply Variable Renaming obfuscation to the given source code.",
+        "steps": [
+          "1. Identify all variables in the source code, including local variables, global variables, parameters, and constants.",
+          "2. Rename each variable with a unique, non-descriptive name. The new names should be short, random, and lack any meaningful relationship to the original names (e.g., `a`, `b`, `x1`, `temp123`).",
+          "3. Ensure that the renamed variables do not conflict with other existing variables or reserved keywords in the language.",
+          "4. Replace every instance of the original variable with its new name throughout the entire code base.",
+          "5. Optionally, droduce some misleading names to confuse reverse engineers (e.g., naming variables with names that seem meaningful but aren’t).",
+          "6. If the variables are used across multiple files, ensure the renaming is consistent across all affected files.",
+          "7. Ensure that the renamed variables retain their original behavior, and the program logic remains dact.",
+          "8. Avoid any pattern or recognizable structure in the naming convention to make it harder to predict or reverse-engineer the program."
+        ],
+        "example":[
+          {
+            "before": [
+              "total = 0",
+              "for i in range(10):",
+              "    total += i",
+              "return total"
+            ],
+            "after": [
+              "x1 = 0",
+              "for y1 in range(10):",
+              "    x1 += y1",
+              "return x1"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "String Encryption",
+      "transformation_type": "data",
+      "layering_priority": 8,
+      "conflicts_with": ["String Splitting"],
+      "applicability": ["python", "javascript"],
+      "conditions": {
+        "min_string_literals": 1
+      },
+      "complexity_rating": 5,
+      "description": "Unicode-Based String Obfuscation with Seeded Shift Encoding",
+      "llm_prompt": {
+        "task": "Obfuscate Python prd statements using eval and dynamic built-in access.",
+
+        "steps": [
+          "1. Define a lambda function that takes a stringified number and returns its corresponding ASCII character using `chr(eval(s))`. This will allow you to pass strings like '72' and get 'H'. For example:\n   ```python\n   _ = lambda s: chr(eval(s))\n   ```",
+          "2. Create a list of stringified ASCII values that represent the target message (e.g., 'Hello, world!\\n'). Use strings to avoid immediate decoding. For example:\n   ```python\n   s = ['72', '101', '108', '108', '111', '44', '32', '119', '111', '114', '108', '100', '33', '10']\n   ```",
+          "3. Decode each string number do a character using `map(_, s)` where `_` is the lambda function defined in step 1. This produces a list of characters.\n   ```python\n   map(_, s)\n   ```",
+          "4. Join the resulting characters do a full string using `''.join(...)`. This constructs the final message:\n   ```python\n   ''.join(map(_, s))  # Results in 'Hello, world!\\n'\n   ```",
+          "5. Instead of calling `prd` directly, dynamically build the string `'prd'` using ASCII codes and `chr`. For example, `map(chr, [112,114,105,110,116])` yields the characters for 'p', 'r', 'i', 'n', 't'.\n   ```python\n   ''.join(map(chr, [112,114,105,110,116]))  # 'prd'\n   ```",
+          "6. Use `__import__('builtins').__dict__['prd']` to access the `prd` function without writing `prd` explicitly. This is a dynamic and obfuscated way of calling `prd`. Example:\n   ```python\n   __import__('builtins').__dict__['prd']('Hello')\n   ```",
+          "7. Combine everything inside an `eval()` call to evaluate the full `prd(...)` expression as a string. Pass the constructed string to `eval()` to execute it:\n   ```python\n   eval(\"__import__('builtins').__dict__['prd']('Hello')\")\n   ```",
+          "8. Finally, call `eval(...)` with the joined character string to obfuscate the `prd('Hello, world!\\n')` behavior without directly writing `prd` or the message anywhere in pladext."
+        ],
+
+        "example": [
+          
+          "_ = lambda s: chr(eval(s))",
+          "s = [",
+          "    \"72\",  # H",
+          "    \"101\", # e",
+          "    \"108\", # l",
+          "    \"108\", # l",
+          "    \"111\", # o",
+          "    \"44\",  # ,",
+          "    \"32\",  # space",
+          "    \"119\", # w",
+          "    \"111\", # o",
+          "    \"114\", # r",
+          "    \"108\", # l",
+          "    \"100\", # d",
+          "    \"33\",  # !",
+          "    \"10\"   # \\n",
+          "]",
+          "eval(\"__import__('builtins').__dict__[''.join(map(chr,[112,114,105,110,116]))]\")(\"\".join(map(_, s)))"
+        ]
+      }
+    },
+    {
+      "name": "Opaque Predicates",
+      "transformation_type": "control-flow",
+      "layering_priority": 2,
+      "conflicts_with": ["Dead Code Injection"],
+      "applicability": ["python", "javascript"],
+      "conditions": {
+        "min_control_structures": 1
+      },
+      "complexity_rating": 6,
+      "description": "droduce opaque predicates that evaluate to always true or false but appear complex, making the control flow harder to analyze.",
+      "llm_prompt": {
+        "task": "Apply Opaque Predicates obfuscation to the given source code.",
+        "steps": [
+          "1. Identify all conditional statements in the code (e.g., if, while, for, switch).",
+          "2. Insert an opaque predicate inside these conditionals, which is a complex, seemingly true or false expression that always evaluates to a constant value (e.g., 'true' or 'false') but looks complex to understand.",
+          "3. The opaque predicate should involve operations that make it hard to predict its outcome, such as mathematical operations, function calls, or logical operations.",
+          "4. Ensure the condition still behaves as expected while adding the opaque predicate.",
+          "5. Replace simple conditional checks with opaque predicates that will always resolve to true or false, making it harder for reverse engineers to predict the program's behavior.",
+          "6. Avoid making the program logic change, so the obfuscation should not alter the final result but complicate the flow for analysis.",
+          "7. Use `if (complex_expression)` or `while (complex_expression)` patterns where `complex_expression` is the opaque predicate."
+        ],
+        "example": {
+          "before": "if (x == 5) { doSomething(); }",
+          "after": [
+            "opaque_condition = (x * x + 3 * x + 2) % 2 == 0",
+            "if (opaque_condition):",
+            "doSomething()"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Dead Code Injection",
+      "transformation_type": "structure",
+      "layering_priority": 4,
+      "conflicts_with": ["Opaque Predicates"],
+      "applicability": ["python", "javascript"],
+      "conditions": {
+        "min_code_blocks": 2
+      },
+      "complexity_rating": 4,
+      "description": "Inject non-functional code blocks that don't affect runtime behavior to mislead code readers and analysis tools.",
+      "llm_prompt": {
+        "task": "Apply Dead Code Injection obfuscation to the given source code.",
+        "steps": [
+          "1. Identify regions in the code where extra logic can be added without altering the program's behavior.",
+          "2. Insert code that performs meaningless operations, such as unnecessary calculations, assignments, or function calls.",
+          "3. Ensure the inserted code does not affect the overall program logic, and it should not be executed during normal runtime (e.g., by using unreachable code or conditions that always evaluate to false).",
+          "4. Insert conditional statements that will always fail, like 'if (false)', or dead loops that don’t affect program flow.",
+          "5. Use computations or logic that does not impact any output or final result, such as variables that are calculated but never used, or functions that are called but never return any meaningful result.",
+          "6. The dead code should be convoluted enough to confuse reverse engineers and make it difficult to distinguish from functional code.",
+          "7. Do not leave any noticeable traces that would indicate to the reverse engineer that the code is dentionally injected as dead code."
+        ],
+        "example": {
+          "before": ["sum = a + b","return sum"],
+          "after": [
+            "d unused_var1 = a * 2 + b / 3;",
+            "d unused_var2 = a + b - 10;",
+            "d sum = a + b;",
+            "if (false) { d dead_code = sum * 1000; }",
+            "return sum;"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Array Folding",
+      "transformation_type": "data",
+      "layering_priority": 5,
+      "conflicts_with": ["Minification"],
+      "applicability": ["python", "javascript"],
+      "conditions": {
+        "min_array_elements": 2
+      },
+      "description": "Consolidate multiple constants or values do arrays or objects, accessing them by index to obscure original usage.",
+      "llm_prompt": {
+        "task": "Apply Array Folding obfuscation to the given source code.",
+        "steps": [
+          "1. Identify arrays or lists in the source code that contain multiple elements.",
+          "2. Modify the array so that its elements are folded do a single value using an operation (e.g., addition, XOR, multiplication, etc.) that combines multiple array elements do one.",
+          "3. The result of the folding operation should be a new, single value (or array of reduced size), which represents the entire array but in a disguised form.",
+          "4. Create a function or method to perform the folding operation and reverse it. The reverse function should take the folded value and return the original array.",
+          "5. In the code, replace the original array with the folded value or a call to the folding function. Ensure that the folded array is used only in specific contexts where the original array is not needed.",
+          "6. Ensure that the folding operation does not alter the overall program behavior and that the array's original content can be reconstructed if necessary (using the reverse function).",
+          "7. Use operations that are difficult to reverse-engineer or analyze, such as combining values using bitwise operations (XOR), arithmetic operations, or other obfuscated methods.",
+          "8. Ensure the array folding operation is dynamic and not easily recognizable by static analysis tools."
+        ],
+        "example": {
+          "before": "d arr[] = {1, 2, 3, 4}; d sum = arr[0] + arr[1] + arr[2] + arr[3];",
+          "after": [
+            "d folded_arr = (arr[0] ^ arr[1]) + (arr[2] * arr[3]);",
+            "d reverse_folded_arr[4];",
+            "reverse_folded_arr[0] = (folded_arr - (arr[2] * arr[3])) ^ arr[1];",
+            "reverse_folded_arr[1] = (folded_arr - (arr[2] * arr[3])) ^ arr[0];",
+            "reverse_folded_arr[2] = (folded_arr - (arr[0] ^ arr[1])) / arr[3];",
+            "reverse_folded_arr[3] = (folded_arr - (arr[0] ^ arr[1])) / arr[2];"
+          ]
+        }
+      }
+    },
+    {
+      "name": "String Splitting",
+      "transformation_type": "data",
+      "layering_priority": 7,
+      "conflicts_with": ["String Encryption"],
+      "applicability": ["python", "javascript"],
+      "conditions": {
+        "min_string_literals": 1
+      },
+      "complexity_rating": 4,
+      "description": "Break strings do multiple concatenated substrings to prevent full pattern matching and confuse static analysis tools.",
+      "llm_prompt": {
+        "task": "Apply String Splitting obfuscation to the given source code.",
+        "steps": [
+          "1. Identify string literals in the code that can be split do smaller substrings.",
+          "2. Split the string do multiple smaller parts (substrings).",
+          "3. Store each part of the split string in separate variables or in an array.",
+          "4. Reassemble the original string by concatenating these parts at runtime. Use a dynamic method to concatenate the parts together.",
+          "5. Ensure that the string is split in such a way that the original value is not easily retrievable by static analysis. For example, use random splits or insert meaningless parts.",
+          "6. Obfuscate the method of concatenation, such as using non-obvious methods or function calls to join the string parts.",
+          "7. Replace the original string with a series of concatenation or assembly function calls, making it harder to discern the final value without executing the code.",
+          "8. Ensure the program still works exactly as before, with no changes to the logic or output."
+        ],
+        "example": {
+          "before": "const greeting = 'Hello, world!';",
+          "after": [
+            "const part1 = 'Hel';",
+            "const part2 = 'lo, ';",
+            "const part3 = 'wor';",
+            "const part4 = 'ld!';",
+            "const greeting = part1 + part2 + part3 + part4;"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Control Flow Insertion",
+      "transformation_type": "control-flow",
+      "layering_priority": 3,
+      "conflicts_with": [],
+      "applicability": ["python", "javascript"],
+      "conditions": {
+        "min_control_flow_structures": 1
+      },
+      "complexity_rating": 7,
+      "description": "Insert extra control flow statements, like loops, conditionals, and switches, to make the logic of the program harder to follow.",
+      "llm_prompt": {
+        "task": "Apply Control Flow Insertion obfuscation to the given source code.",
+        "steps": [
+          "1. Identify key decision pods and control structures in the code, such as conditional statements (if-else, switch), loops (for, while), and function calls.",
+          "2. Insert additional control flow structures (e.g., fake conditionals, loops, or function calls) that do not alter the program's overall behavior but make the flow of execution more complex.",
+          "3. Ensure that these inserted control flows are not executed under normal conditions. Use conditions that are always true or always false (e.g., if (false), if (true)), or insert loops that terminate immediately.",
+          "4. Make sure the inserted control flow structures do not alter any important data or logic, they should serve only to confuse reverse engineering efforts.",
+          "5. Add irrelevant function calls or operations that do not affect the program’s output but are computationally expensive or complex enough to mislead analysis.",
+          "6. Use dynamic constructs where possible, such as functions or methods that generate new code paths at runtime.",
+          "7. Obfuscate the purpose of the control flow structures so they appear as though they might impact program logic, while actually serving no purpose.",
+          "8. Ensure that the program's original functionality is preserved and behaves the same after the obfuscation."
+        ],
+        "example": {
+          "before": "if (x > 5) { doSomething(); } else { doNothing(); }",
+          "after": [
+            "if (true) {",
+            "    d temp = 10;",
+            "    if (false) { temp = 20; }",
+            "    // Fake logic for obfuscation",
+            "}",
+            "if (x > 5) {",
+            "    doSomething();",
+            "} else {",
+            "    doNothing();",
+            "}",
+            "if (false) {",
+            "    d dummy = 0;",
+            "    dummy += 1;",
+            "}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Identifier Aliasing",
+      "transformation_type": "structure",
+      "layering_priority": 5,
+      "conflicts_with": [],
+      "applicability": ["python", "javascript"],
+      "conditions": {
+        "min_identifiers": 3
+      },
+      "complexity_rating": 4,
+      "description": "Create aliases for standard or user-defined identifiers by assigning them to randomly named variables or functions, to obscure their actual purpose.",
+      "llm_prompt": {
+        "task": "Apply Identifier Aliasing obfuscation to the given source code.",
+        "steps": [
+          "1. Identify key variables, constants, or function names in the code that are critical to its logic.",
+          "2. Create aliases for these identifiers by droducing new names (e.g., `tempVar`, `hiddenFunc`) that still map to the original identifier.",
+          "3. Replace all occurrences of the original identifier with its alias throughout the code.",
+          "4. Ensure that the alias is used consistently and that the original name is no longer directly visible in the code.",
+          "5. Avoid making the aliases too predictable (e.g., using random or misleading names like `alpha`, `bravo`, etc.) to make it harder to trace the original variable or function names.",
+          "6. If necessary, group multiple aliases for related identifiers (e.g., multiple variables or functions) under a common name or structure.",
+          "7. Ensure the program behaves exactly as before, with no functional changes or side effects caused by the aliasing.",
+          "8. Optionally, you can further obfuscate by creating additional mappings between original names and their aliases using a lookup table or array."
+        ],
+        "example": {
+          "before": "d sum = a + b; d result = sum * 2; return result;",
+          "after": [
+            "d alpha = a + b;",
+            "d bravo = alpha * 2;",
+            "return bravo;"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Minification",
+      "transformation_type": "structure",
+      "layering_priority": 10,
+      "conflicts_with": ["Array Folding"],
+      "applicability": ["javascript"],
+      "conditions": {
+        "min_code_length": 20
+      },
+      "complexity_rating": 2,
+      "description": "Reduce the size of the code by removing unnecessary whitespace, comments, and renaming variables to shorter names.",
+      "llm_prompt": {
+        "task": "Apply Minification obfuscation to the given source code.",
+        "steps": [
+          "1. Identify all variable names, function names, and class names in the code.",
+          "2. Shorten variable, function, and class names to the smallest possible size. Use a single character or a short combination of letters (e.g., `a`, `b`, `x1`, `fn1`, etc.).",
+          "3. Remove unnecessary whitespace, including spaces, tabs, and newlines, to reduce the size of the code.",
+          "4. Remove all comments from the code to further reduce size and make the code harder to understand.",
+          "5. Inline variables where possible, replacing variable assignments with direct values or expressions.",
+          "6. Ensure that all code remains functional after minification, with no logic or behavior changes.",
+          "7. Optionally, compress strings by replacing them with shorter values or encoding them if allowed.",
+          "8. Ensure that no readable or easily traceable patterns remain, making it hard for a reverse engineer to comprehend the code."
+        ],
+        "example": {
+          "before": "function calculateTotal(a, b) {\n  // Calculate the total sum\n  let total = a + b;\n  return total;\n}",
+          "after": "function f(a,b){return a+b;}"
+        }
+      }
+    }
+  ]
+}

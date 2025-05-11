@@ -1,0 +1,39 @@
+{
+  "semantic_regions": [
+    {
+      "function": "main",
+      "block_start": "14000153f",
+      "semantic_label": "initialization"
+    },
+    {
+      "function": "main",
+      "block_start": "140001547",
+      "semantic_label": "dispatcher"
+    },
+    {
+      "function": "main",
+      "block_start": "14000154c",
+      "semantic_label": "api_wrapper"
+    },
+    {
+      "function": "main",
+      "block_start": "14000155b",
+      "semantic_label": "computation"
+    },
+    {
+      "function": "main",
+      "block_start": "140001568",
+      "semantic_label": "computation"
+    },
+    {
+      "function": "main",
+      "block_start": "14000156d",
+      "semantic_label": "api_wrapper"
+    },
+    {
+      "function": "main",
+      "block_start": "140001581",
+      "semantic_label": "branch"
+    }
+  ]
+}

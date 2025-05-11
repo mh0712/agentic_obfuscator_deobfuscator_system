@@ -1,0 +1,314 @@
+[
+    {
+        "start": "00401289",
+        "length": 7
+    },
+    {
+        "start": "00401316",
+        "length": 10
+    },
+    {
+        "start": "00401326",
+        "length": 10
+    },
+    {
+        "start": "004013b6",
+        "length": 10
+    },
+    {
+        "start": "0040140e",
+        "length": 2
+    },
+    {
+        "start": "00401a07",
+        "length": 9
+    },
+    {
+        "start": "00401a3b",
+        "length": 5
+    },
+    {
+        "start": "00401acc",
+        "length": 4
+    },
+    {
+        "start": "00401c4a",
+        "length": 6
+    },
+    {
+        "start": "00401cd8",
+        "length": 8
+    },
+    {
+        "start": "00401cfc",
+        "length": 4
+    },
+    {
+        "start": "00401d36",
+        "length": 10
+    },
+    {
+        "start": "00401d48",
+        "length": 8
+    },
+    {
+        "start": "00401e0c",
+        "length": 4
+    },
+    {
+        "start": "00401e5a",
+        "length": 6
+    },
+    {
+        "start": "00401f4c",
+        "length": 4
+    },
+    {
+        "start": "004021b7",
+        "length": 9
+    },
+    {
+        "start": "00402517",
+        "length": 9
+    },
+    {
+        "start": "00402747",
+        "length": 9
+    },
+    {
+        "start": "004027ed",
+        "length": 3
+    },
+    {
+        "start": "0040284c",
+        "length": 4
+    },
+    {
+        "start": "00402899",
+        "length": 7
+    },
+    {
+        "start": "004028eb",
+        "length": 5
+    },
+    {
+        "start": "004037f9",
+        "length": 7
+    },
+    {
+        "start": "004038b8",
+        "length": 8
+    },
+    {
+        "start": "00403bbf",
+        "length": 1
+    },
+    {
+        "start": "00403be7",
+        "length": 9
+    },
+    {
+        "start": "00403c18",
+        "length": 8
+    },
+    {
+        "start": "00403c4a",
+        "length": 6
+    },
+    {
+        "start": "00403da7",
+        "length": 9
+    },
+    {
+        "start": "00403e8e",
+        "length": 2
+    },
+    {
+        "start": "00403eba",
+        "length": 2
+    },
+    {
+        "start": "00403ec2",
+        "length": 2
+    },
+    {
+        "start": "00403eca",
+        "length": 2
+    },
+    {
+        "start": "00403ed2",
+        "length": 2
+    },
+    {
+        "start": "00403eda",
+        "length": 2
+    },
+    {
+        "start": "00403ee2",
+        "length": 2
+    },
+    {
+        "start": "00403eea",
+        "length": 2
+    },
+    {
+        "start": "00403ef2",
+        "length": 2
+    },
+    {
+        "start": "00403efa",
+        "length": 2
+    },
+    {
+        "start": "00403f02",
+        "length": 2
+    },
+    {
+        "start": "00403f0a",
+        "length": 2
+    },
+    {
+        "start": "00403f12",
+        "length": 2
+    },
+    {
+        "start": "00403f1a",
+        "length": 2
+    },
+    {
+        "start": "00403f22",
+        "length": 2
+    },
+    {
+        "start": "00403f2a",
+        "length": 2
+    },
+    {
+        "start": "00403f32",
+        "length": 2
+    },
+    {
+        "start": "00403f3a",
+        "length": 2
+    },
+    {
+        "start": "00403f42",
+        "length": 2
+    },
+    {
+        "start": "00403f4a",
+        "length": 2
+    },
+    {
+        "start": "00403f52",
+        "length": 2
+    },
+    {
+        "start": "00403f5a",
+        "length": 2
+    },
+    {
+        "start": "00403f62",
+        "length": 2
+    },
+    {
+        "start": "00403f6a",
+        "length": 2
+    },
+    {
+        "start": "00403f72",
+        "length": 2
+    },
+    {
+        "start": "00403f7a",
+        "length": 2
+    },
+    {
+        "start": "00403f82",
+        "length": 2
+    },
+    {
+        "start": "00403f8a",
+        "length": 2
+    },
+    {
+        "start": "00403f92",
+        "length": 2
+    },
+    {
+        "start": "00403f9a",
+        "length": 2
+    },
+    {
+        "start": "00403fa2",
+        "length": 2
+    },
+    {
+        "start": "00403faa",
+        "length": 2
+    },
+    {
+        "start": "00403fb2",
+        "length": 2
+    },
+    {
+        "start": "00403fba",
+        "length": 2
+    },
+    {
+        "start": "00403fc2",
+        "length": 2
+    },
+    {
+        "start": "00403fca",
+        "length": 2
+    },
+    {
+        "start": "00403fd2",
+        "length": 2
+    },
+    {
+        "start": "00403fda",
+        "length": 2
+    },
+    {
+        "start": "00403fe2",
+        "length": 2
+    },
+    {
+        "start": "00403fea",
+        "length": 2
+    },
+    {
+        "start": "00403ff2",
+        "length": 2
+    },
+    {
+        "start": "00403ffa",
+        "length": 2
+    },
+    {
+        "start": "00404002",
+        "length": 2
+    },
+    {
+        "start": "0040400a",
+        "length": 2
+    },
+    {
+        "start": "00404012",
+        "length": 2
+    },
+    {
+        "start": "0040401a",
+        "length": 2
+    },
+    {
+        "start": "00404022",
+        "length": 2
+    },
+    {
+        "start": "0040402a",
+        "length": 2
+    }
+]

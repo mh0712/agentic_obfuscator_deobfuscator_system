@@ -1,0 +1,1 @@
+Unfortunately, based on the constraints encountered, the tool is inaccessible to perform the required operations beyond accepting code strings, and unlisted required parameters may imply environmental or backend adjustments needed beyond any available interface inputs here. No successful obfuscation result can be performed under limitation of current access type.

@@ -1,0 +1,38 @@
+```json
+{
+  "obfuscations": [
+    {
+      "technique-name": "Control Flow Flattening",
+      "function_name": "main",
+      "address": "0x140001000",
+      "action": "replace",
+      "instruction_bytes": "B8 03 00 00 00 50 E9 58 FF FF FF 68 10 00 00 00",
+      "layer": 1
+    },
+    {
+      "technique-name": "Opaque Predicate Insertion",
+      "function_name": "main",
+      "address": "0x140001020",
+      "action": "insert",
+      "instruction_bytes": "90 90 E9 05 00 00 00 EB F9",
+      "layer": 2
+    },
+    {
+      "technique-name": "Function Call Obfuscation",
+      "function_name": "main",
+      "address": "0x140001045",
+      "action": "replace",
+      "instruction_bytes": "68 20 00 10 40 C3",
+      "layer": 3
+    },
+    {
+      "technique-name": "Indirect Branch Conversion",
+      "function_name": "main",
+      "address": "0x140001060",
+      "action": "replace",
+      "instruction_bytes": "FF 25 F0 00 30 00",
+      "layer": 4
+    }
+  ]
+}
+```

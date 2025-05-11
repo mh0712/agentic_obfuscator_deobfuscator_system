@@ -1,0 +1,27 @@
+{
+  "complexity_metrics": {
+    "lines": 30,
+    "functions": 3,
+    "classes": 0,
+    "cyclomatic_complexity": 4,
+    "variables": 6,
+    "identifiers": 9,
+    "strings": 9,
+    "literals": 15,
+    "booleans": 0,
+    "control_structures": 2,
+    "code_blocks": 3,
+    "nesting_depth": 1
+  },
+  "applicability_flags": {
+    "min_identifiers": true,
+    "min_functions": true,
+    "min_string_literals": true,
+    "min_literals": true,
+    "min_code_blocks": true,
+    "min_control_structures": true,
+    "min_boolean_expressions": false,
+    "max_nesting_depth": true
+  },
+  "error": null
+}

@@ -1,0 +1,36 @@
+```json
+{
+  "semantically_equivalent": true,
+  "test_results": [
+    {
+      "test_name": "greet",
+      "input": "Alice",
+      "original_output": "Hello, Alice!",
+      "obfuscated_output": "Hello, Alice!",
+      "match": true
+    },
+    {
+      "test_name": "add",
+      "input": [5, 10],
+      "original_output": 15,
+      "obfuscated_output": 15,
+      "match": true
+    },
+    {
+      "test_name": "complex_function",
+      "input": 42,
+      "original_output": 18418.66131930584,
+      "obfuscated_output": 18418.66131930584,
+      "match": true
+    },
+    {
+      "test_name": "main_execution",
+      "input": null,
+      "original_output": ["Hello, John!", 15, 18418.66131930584],
+      "obfuscated_output": ["Hello, John!", 15, 18418.66131930584],
+      "match": true
+    }
+  ],
+  "error": null
+}
+```

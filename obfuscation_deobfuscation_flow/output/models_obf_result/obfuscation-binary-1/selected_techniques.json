@@ -1,0 +1,36 @@
+```json
+[
+  {
+    "technique_name": "Control Flow Flattening",
+    "function_name": "main",
+    "description": "Rewrite entire functions to use a state-controlled dispatch loop, flattening natural control flow.",
+    "reason": "Highly suitable for obfuscating multi-path logic and branches present in the main function which involves multiple calls and control transitions. It will significantly increase the complexity of static analysis and understanding.",
+    "region_label": "dispatcher",
+    "expected_effect": "Increased control flow complexity with a transformed CFG leading to higher difficulty in reverse engineering."
+  },
+  {
+    "technique_name": "Opaque Predicate Insertion",
+    "function_name": "main",
+    "description": "Insert always-false or always-true branches to confuse static analysis.",
+    "reason": "Appropriate for use in control logic within the 'main' function to pad out blocks and obscure decision-making logic without altering the program's actual functionality.",
+    "region_label": "control_block",
+    "expected_effect": "Increased difficulty in control flow analysis by adding misleading paths."
+  },
+  {
+    "technique_name": "Function Call Obfuscation",
+    "function_name": "main",
+    "description": "Replace direct CALL instructions with push+jump+return label sequences.",
+    "reason": "Effective for obfuscating the function call sequences in 'main', especially when calling external functions like 'square', '__main', and 'printf'.",
+    "region_label": "call_block",
+    "expected_effect": "Alters the semantics of control flow by disguising function calls, thereby complicating call tracing."
+  },
+  {
+    "technique_name": "Indirect Branch Conversion",
+    "function_name": "main",
+    "description": "Turn direct jumps/calls into indirect register-based forms to obscure control flow targets.",
+    "reason": "Useful for the unconditional jumps within 'main', such as controlled paths to 'square' or '__main'.",
+    "region_label": "jump_block",
+    "expected_effect": "Obfuscates direct targets of jumps and calls, adding a layer of address indirection."
+  }
+]
+```

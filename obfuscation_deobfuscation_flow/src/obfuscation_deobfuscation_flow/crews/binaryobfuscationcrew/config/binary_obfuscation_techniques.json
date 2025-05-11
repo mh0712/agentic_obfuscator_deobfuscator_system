@@ -24,11 +24,11 @@
                 "SETZ BL",
                 "XOR EBX, 1",
                 "MOVZX EBX, BL",
-                "MOV RSI, AddressA",
-                "MOV RDI, AddressNext",
+                "MOV ESI, AddressA",
+                "MOV EDI, AddressNext",
                 "CMP BL, 0",
-                "CMOVE RSI, RDI",
-                "JMP RSI"
+                "CMOVZ ESI, EDI",
+                "JMP ESI"
               ]
             }
           }
@@ -59,11 +59,11 @@
           "    asm.assemble(cmpAddr.add(3), \"SETZ BL\"); // Replace SETZ/SETNE based on branch logic",
           "    asm.assemble(cmpAddr.add(5), \"XOR EBX, 1\"); // Inverts branch outcome if needed",
           "    asm.assemble(cmpAddr.add(8), \"MOVZX EBX, BL\");",
-          "    asm.assemble(cmpAddr.add(11), \"MOV RSI, \" + jumpTarget);",
-          "    asm.assemble(cmpAddr.add(16), \"MOV RDI, \" + callTarget);",
+          "    asm.assemble(cmpAddr.add(11), \"MOV ESI, \" + jumpTarget);",
+          "    asm.assemble(cmpAddr.add(16), \"MOV EDI, \" + callTarget);",
           "    asm.assemble(cmpAddr.add(21), \"CMP BL, 0\");",
-          "    asm.assemble(cmpAddr.add(24), \"CMOVE RSI, RDI\");",
-          "    asm.assemble(cmpAddr.add(28), \"JMP RSI\");",
+          "    asm.assemble(cmpAddr.add(24), \"CMOVZ ESI, EDI\");",
+          "    asm.assemble(cmpAddr.add(28), \"JMP ESI\");",
           "    ",
           "    println(\"Arithmetic Branch Replacement complete.\");",
           "}"

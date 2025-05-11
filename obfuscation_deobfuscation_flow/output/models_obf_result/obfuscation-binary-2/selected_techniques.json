@@ -1,0 +1,79 @@
+```json
+[
+  {
+    "technique_name": "Dead Code Insertion",
+    "function_name": "main",
+    "description": "Inserts instructions that do not affect program logic, control flow, or state. This increases analysis complexity and disrupts pattern-based detection or emulation-based analysis.",
+    "reasoning": "The 'main' function's prologue and epilogue are suitable regions for dead code insertion. These regions often have non-critical performance roles and can serve well to disrupt pattern-based detection techniques without impacting the program's logic.",
+    "exampleOriginal": ["mov eax, 5", "call do_work"],
+    "exampleObfuscated": ["nop", "xor ecx, ecx", "add ecx, 0", "sub ecx, 0", "mov ecx, ecx", "nop", "mov eax, 5", "call do_work"],
+    "implementationNotes": [
+      "Instructions inserted must not alter flags or registers used in surrounding logic.",
+      "Avoid inserting dead code between instruction sequences with strict timing or ordering (e.g., syscall setup).",
+      "Dead code is ideally mixed with real logic to obscure control flow boundaries.",
+      "XOR reg, reg is preferred to zero a register without changing flags (unless used right before a conditional jump).",
+      "NOPs are useful filler but easy to spot—mix with more 'plausible' instructions like LEA, redundant MOVs, or useless ORs."
+    ],
+    "ghidraSample": {
+      "javaMethod": "applyDeadCodeInsertion",
+      "code": [
+        "import ghidra.app.script.GhidraScript;",
+        "import ghidra.app.plugin.assembler.*;",
+        "import ghidra.program.model.address.*;",
+        "import ghidra.app.plugin.assembler.sleigh.*;",
+        "import ghidra.util.exception.*;",
+        "",
+        "private void applyDeadCodeInsertion() throws AssemblySyntaxException, Exception {",
+        "    println(\"Applying Dead Code Insertion in 'main' function...\");",
+        "    asm.assemble(toAddr(\"0x140001540\"), \"NOP\");",
+        "    asm.assemble(toAddr(\"0x140001541\"), \"NOP\");",
+        "    asm.assemble(toAddr(\"0x14000154c\"), \"XOR R8D, R8D\");",
+        "    asm.assemble(toAddr(\"0x14000154d\"), \"NOP\");",
+        "    createLabel(toAddr(\"0x140001600\"), \"dead_code_inserted\", true);",
+        "    println(\"Dead Code Insertion Applied.\");",
+        "}"
+      ]
+    }
+  },
+  {
+    "technique_name": "Arithmetic Branch Replacement",
+    "function_name": "main",
+    "description": "Replaces standard conditional branch constructs (e.g., CMP + Jcc) with alternative sequences using flag-setting instructions (SETcc), arithmetic tricks, or inverted logic, to flatten control flow and disrupt traditional CFG (Control Flow Graph) recovery.",
+    "reasoning": "The 'main' function contains conditional logic that can potentially be obfuscated by replacing branching instructions with arithmetic equivalents. This technique obscures control flow making it harder to reverse engineer logic paths.",
+    "exampleOriginal": ["cmp eax, 0", "jz label_zero", "mov ebx, 1", "jmp done", "label_zero:", "mov ebx, 0", "done:"],
+    "exampleObfuscated": ["cmp eax, 0", "setz bl", "xor ebx, 1"],
+    "implementationNotes": [
+      "Never overwrite existing instructions. Before inserting, analyze instruction boundaries using `Instruction.getLength()` or by inspecting the disassembly at the target address.",
+      "Insert obfuscating sequences only into *known-safe locations*, such as: (1) unused code caves, (2) padded NOP regions, (3) newly allocated code sections, or (4) relocated/duplicated control logic blocks.",
+      "To avoid disrupting control flow, ensure that your inserted code (e.g., CMP + SETcc + arithmetic) mirrors the exact logical behavior of the original conditional branch.",
+      "SETcc instructions like SETZ or SETNE work reliably only when targeting 8-bit registers (e.g., AL, BL, CL). Avoid using them with wider registers like EAX.",
+      "Always define labels before referencing them in jumps (e.g., `createLabel(toAddr(\"0x140001570\"), \"skip_label\", true)`), and verify jump targets align with instruction starts.",
+      "Do not include label names directly inside the instruction string. Assemble jumps like `JMP label_name` and define the label separately.",
+      "Use `Instruction` objects to determine instruction lengths when chaining `.add(offset)` on addresses, so that inserted instructions do not start inside existing ones.",
+      "Add `NOP` padding at jump destinations if needed to preserve alignment and maintain valid disassembly.",
+      "Ensure flags are not modified between CMP and SETcc when emulating conditional logic. If uncertain, isolate the logic in a separate block.",
+      "CMOVcc instructions are supported and can be used for conditional moves in obfuscated, branchless equivalents of decision blocks.",
+      "If modifying existing code, always save and displace original blocks to a safe region before rewriting logic at the original location."
+    ],
+    "ghidraSample": {
+      "javaMethod": "applyArithmeticBranchReplacement",
+      "code": [
+        "import ghidra.app.script.GhidraScript;",
+        "import ghidra.app.plugin.assembler.*;",
+        "import ghidra.program.model.address.*;",
+        "import ghidra.app.plugin.assembler.sleigh.*;",
+        "import ghidra.util.exception.*;",
+        "",
+        "private void applyArithmeticBranchReplacement() throws AssemblySyntaxException, Exception {",
+        "    println(\"Applying Arithmetic Branch Replacement in 'main' function...\");",
+        "    asm.assemble(toAddr(\"0x140001560\"), \"CMP ECX, 0x5\");",
+        "    asm.assemble(toAddr(\"0x140001563\"), \"JZ 0x140001565\");",
+        "    asm.assemble(toAddr(\"0x140001565\"), \"CALL 0x140001530\");",
+        "    createLabel(toAddr(\"0x140001601\"), \"arithmetic_branch_replacement_done\", true);",
+        "    println(\"Arithmetic Branch Replacement Applied.\");",
+        "}"
+      ]
+    }
+  }
+]
+```

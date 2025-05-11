@@ -1,0 +1,43 @@
+{
+  "function": "main",
+  "blocks": [
+    {
+      "start": "14000153f",
+      "end": "140001586",
+      "instructions": [
+        "14000153f PUSH RBP",
+        "140001540 MOV RBP,RSP",
+        "140001543 SUB RSP,0x30",
+        "140001547 CALL 0x140001640",
+        "14000154c LEA RAX,[0x140009000]",
+        "140001553 MOV RCX,RAX",
+        "140001556 CALL 0x140007c70",
+        "14000155b MOV ECX,0x5",
+        "140001560 CALL 0x140001530",
+        "140001565 MOV dword ptr [RBP + -0x4],EAX",
+        "140001568 MOV EAX,dword ptr [RBP + -0x4]",
+        "14000156b MOV EDX,EAX",
+        "14000156d LEA RAX,[0x14000900d]",
+        "140001574 MOV RCX,RAX",
+        "140001577 CALL 0x140007c70",
+        "14000157c MOV EAX,0x0",
+        "140001581 ADD RSP,0x30",
+        "140001585 POP RBP",
+        "140001586 RET"
+      ],
+      "successors": [
+        "140001640",
+        "140007c70",
+        "140001530",
+        "140007c70"
+      ],
+      "type": "entry",
+      "calls": [
+        "140001640: __main",
+        "140007c70: printf",
+        "140001530: square",
+        "140007c70: printf"
+      ]
+    }
+  ]
+}

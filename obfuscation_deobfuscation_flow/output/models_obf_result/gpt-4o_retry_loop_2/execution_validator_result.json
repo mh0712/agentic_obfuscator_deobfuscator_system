@@ -1,0 +1,9 @@
+{
+  "is_valid_syntax": true,
+  "syntax_error": null,
+  "runs_without_error": false,
+  "runtime_error": {
+    "error_type": "KeyError",
+    "stack_trace": "Traceback (most recent call last):\n  File \"<string>\", line 38, in <module>\n  File \"<string>\", line 34, in evykemys\nKeyError: 'name'"
+  }
+}

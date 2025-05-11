@@ -1,0 +1,52 @@
+Test Results:
+1. Original Code:
+   - Function kisdsadg:
+     - Test case: nameaaaa="Alice"
+       Expected output: "Hello, Alice!"
+       Result: Passed
+     - Test case: nameaaaa="Bob"
+       Expected output: "Hello, Bob!"
+       Result: Passed
+
+   - Function bjkdfgfa:
+     - Test case: aaaaa=5, bbbbbbbb=10
+       Expected output: 15
+       Result: Passed
+     - Test case: aaaaa=-3, bbbbbbbb=7
+       Expected output: 4
+       Result: Passed
+
+   - Function hjtregcsgd:
+     - Test case: xxxxx=2
+       Expected output: approximately 999
+       Result: Passed
+     - Test case: xxxxx=5
+       Expected output: approximately 2495
+       Result: Passed
+
+2. Obfuscated Code:
+   - Function kisdsadg (Obfuscated):
+     - Test case: nameaaaa="Alice"
+       Expected output: "Hello, Alice!"
+       Result: Passed
+     - Test case: nameaaaa="Bob"
+       Expected output: "Hello, Bob!"
+       Result: Passed
+
+   - Function bjkdfgfa (Obfuscated):
+     - Test case: aaaaa=5, bbbbbbbb=10
+       Expected output: 15
+       Result: Passed
+     - Test case: aaaaa=-3, bbbbbbbb=7
+       Expected output: 4
+       Result: Passed
+
+   - Function hjtregcsgd (Obfuscated):
+     - Test case: xxxxx=2
+       Expected output: approximately 999
+       Result: Passed
+     - Test case: xxxxx=5
+       Expected output: approximately 2495
+       Result: Passed
+
+All tests have passed successfully for both the original and obfuscated versions of the code.

@@ -1,0 +1,52 @@
+```json
+[
+  {
+    "type": "arithmetic branch replacement",
+    "addresses": {
+      "replace": [
+        {
+          "address": "0x00402178",
+          "instruction": "JZ 0x0040217f",
+          "replacement": [
+            "SETZ BL",
+            "XOR EBX, 1",
+            "MOVZX EBX, BL",
+            "MOV ESI, 0x0040217f",
+            "MOV EDI, 0x00402180",
+            "CMP BL, 0",
+            "CMOVZ ESI, EDI",
+            "JMP ESI"
+          ]
+        }
+      ]
+    },
+    "operands": {
+      "registers": ["BL", "EBX", "ESI", "EDI"],
+      "constants": [0],
+      "labels": ["0x0040217f", "0x00402180"]
+    },
+    "layer": 0
+  },
+  {
+    "type": "dead code insertion",
+    "addresses": {
+      "insert": [
+        {
+          "address": "0x004037f9",
+          "instructions": [
+            "XOR EAX, EAX",
+            "ADD EAX, 0"
+          ]
+        }
+      ]
+    },
+    "operands": {
+      "registers": ["EAX"],
+      "constants": [0]
+    },
+    "layer": 1
+  }
+]
+```
+
+This JSON represents a patch plan that applies the "Arithmetic Branch Replacement" and "Dead Code Insertion" obfuscations safely in free memory regions.

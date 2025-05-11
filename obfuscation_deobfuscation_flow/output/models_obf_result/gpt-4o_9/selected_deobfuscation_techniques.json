@@ -1,0 +1,20 @@
+[
+  {
+    "technique_name": "String Decoding (XOR/Base64/Custom Obfuscation)",
+    "description": "Deobfuscate and inline hidden or encoded strings that have been obfuscated using encoding mechanisms such as XOR, Base64, ROT13, percent-encoding, charCode arrays, lookup tables, or layered decoding logic. Handles custom string decoding routines used in malicious or obfuscated scripts.",
+    "llm_prompt": "Task:\nPerform **advanced and complete deobfuscation** on obfuscated JavaScript code that uses **string encoding and decoding mechanisms** to hide readable strings. Your goal is to identify and extract any decoding functions or routines in the code, analyze the encoding/decoding logic, decode and replace strings in-place, support nested or layered decoding, and preserve the original behavior.",
+    "reasoning": "The code contains Base64 encoded strings, which require decoding to make the script readable. The presence of Base64 is indicated by typical obfuscation patterns in the script including `atob()` function calls."
+  },
+  {
+    "technique_name": "String Array Rotation",
+    "description": "Rotate string arrays to obfuscate their order. The rotation can be performed with various techniques like cyclic shifts, reverse indexing, or more advanced tricks like rotating parts of the array dynamically based on conditions or computations.",
+    "llm_prompt": "Task:\nDeobfuscate the code by identifying and undoing any rotation applied to string arrays. The goal is to restore the original order of the string array elements using techniques like cyclic shifts, dynamic conditions, or even advanced obfuscation like rotating chunks of the array.",
+    "reasoning": "The script utilizes array rotation mechanisms, which are common in obfuscated JavaScript to confuse the order of operations. Correcting this order is necessary to understand the original logic of the script."
+  },
+  {
+    "technique_name": "Variable Recovery",
+    "description": "Recover meaningful variable names and restore semantic clarity in code that has been obfuscated by aggressive renaming, scope hiding, shadowing, or minification. Variable usage, purpose, and type should be inferred based on context and usage patterns.",
+    "llm_prompt": "Task: You are given an obfuscated JavaScript code with meaningless variable names, reused variable identifiers, or confusing scoping and shadowing. Recover the original intent behind variables by inferring meaningful names, deobfuscating misleading or reused identifiers, ensuring behavioral equivalence, and making the code semantically meaningful.",
+    "reasoning": "Obfuscated scripts often rename variables to obscure their intent and make the code harder to read. After decoding and correcting rotations, it is important to restore meaningful names to enhance code readability and maintenance."
+  }
+]

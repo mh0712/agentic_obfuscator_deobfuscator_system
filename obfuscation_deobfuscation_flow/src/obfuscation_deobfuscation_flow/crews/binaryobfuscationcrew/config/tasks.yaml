@@ -60,109 +60,122 @@ plan_binary_obfuscation_patches:
   name: "Plan Binary Obfuscation Patch Locations"
   description: |
 
-    **Goal**:
-    You are tasked with generating a valid and safe **patch plan** for applying binary-level obfuscation to a target executable. 
-    This plan will later be used by another agent to generate an executable Ghidra script that modifies the binary. Your plan must define **where** and **what** to patch, using only known safe memory regions.
+    # Task: Generate a Safe Patch Plan for Binary Obfuscation
+
+    You are tasked with generating a valid and safe **patch plan** for applying **binary-level obfuscation** to a target executable.  
+    This plan will later be used by another agent to generate an executable **Ghidra script** that modifies the binary.
 
     ---
 
-    ### 🔧 Inputs
+    ## Ghidra Assembly Syntax Requirements (Read First)
 
-    * **Binary path**: `{binary_path}`
-    * **Free memory regions** (provided as JSON by find_free_memory_tool):
+    All assembly instructions **must** be written in syntax compatible with **Ghidra’s Sleigh assembler**:
 
-      * `free_memory_ge12.json`: regions ≥ 12 bytes (use these for Dead Code Insertion Techniques)
-      * `free_memory_lt12.json`: regions < 12 bytes (use these for Arithmetic Branch Replacement Techniques)
-      * `conditional_branches.json`(provided by the find_conditional_branches_tool): contains all conditional branches in the binary. Use these to identify potential replacement targets for branch replacement techniques.
+    ### Rules
+    - Do **NOT**  EVER use MASM or NASM-specific syntax such as:
+      - `BYTE PTR`, `DWORD PTR`
+      - `MOVABS`
+      
+    ### 2. Valid Registers for x86-32 (IA-32 Only)
+    - **32-bit:** `EAX`, `EBX`, `ECX`, `EDX`, `ESI`, `EDI`, `EBP`, `ESP`
+    - **16-bit:** `AX`, `BX`, `CX`, `DX`, `SI`, `DI`, `BP`, `SP`
+    - **8-bit:** `AL`, `AH`, `BL`, `BH`, `CL`, `CH`, `DL`, `DH`
+    -  **Do not use** any 64-bit registers like `RAX`, `RSI`, `RDI`.
 
-    * **Selected techniques**: `selected_techniques.json` given by  binary_technique_plan_task contains implementation details of the obfuscation techniques selected for this binary.
+    ### 3. Conditional Moves
+    - Always use the full mnemonic: `cmovz`, `cmovnz`, etc.
+    - Do not use aliases like `cmove`.
 
-    ###Requirements
-
-    1. **Use only available free memory**
-
-      * All insertions must target addresses inside the provided free memory regions.
-      * Replacements of existing code are discouraged unless the region is fully verified safe.
-
-    2.Use Pattern from the selected techniques to generate the patch plan.
-
-      * Each technique must be applied in a way that matches its description and requirements.
-      * Use the provided JSON knowledge base to ensure correct implementation.
-      * The patch plan must include all necessary operands, including registers, constants, and labels.
-
-    3. **Precision is critical**
-
-      * Instruction sizes must **exactly match** the available byte count.
-      * Use the byte-length mapping table below to determine allowable instructions.
-
-    3. **Output Format**:
-      Produce a JSON **array**. Each entry should be a complete patch plan for one technique:
-
-      ```json
-    Each element in the output array must follow this structure:
-
-    - type: (string) Name of the obfuscation technique used (e.g., "junk insertion")
-    - addresses:
-        - insert: (optional list) List of insertion patches:
-            - address: (string) Virtual address within a free memory region (e.g., "0x140001568")
-            - instructions: (list of strings) Assembly mnemonics to insert at the given address
-        - replace: (optional list) List of live instruction replacements:
-            - address: (string) Address of the original instruction to replace
-            - instruction: (string) The original instruction at that address
-            - replacement: (list of strings) New instructions that replace the original
-    - operands:
-        - registers: (list of strings) Registers used in this patch
-        - constants: (list of numbers) Constants or immediate values used
-        - labels: (list of address strings) Addresses used as control-flow targets
-    - layer: (integer) Application order index; lower numbers are applied earlier
-
-      ```
-
-    ###Critical Constraints
-
-    * **Do NOT exceed available bytes** in any memory region.
-    * **Do NOT include label names** directly in instruction strings—labels must be provided as raw addresses in the `labels` list.
+    ### 4. Instruction Byte Size Table
 
     ```json
     {
       "MOV": 3, "ADD": 3, "SUB": 3, "XOR": 3, "IMUL": 4, "CMP": 3,
-      "TEST": 3, "JMP": 5, "JE": 5, "JZ": 5, "JNE": 5, "JA": 5, "JB": 5,
+      "TEST": 3, "JMP": 5, "JE": 5, "JZ": 5, "JA": 5, "JB": 5,
       "CALL": 5, "RET": 1, "NOP": 1, "HLT": 1, "WAIT": 1, "LOCK": 1,
       "PUSH": 2, "POP": 2, "AND": 3, "OR": 3, "NOT": 3, "SHL": 3,
       "SHR": 3, "SAR": 3, "ROL": 3, "ROR": 3,
-      "MOVSB": 1, "MOVSW": 1, "MOVSD": 1, "MOVSQ": 1
+      "MOVSB": 1, "MOVSW": 1, "MOVSD": 1, "MOVSQ": 1,
+      "CMOVZ": 3, "CMOVNZ": 3, "CMOVA": 3, "CMOVAE": 3,
+      "CMOVB": 3, "CMOVBE": 3, "CMOVG": 3, "CMOVGE": 3,
+      "CMOVL": 3, "CMOVLE": 3, "CMOVS": 3, "CMOVNS": 3
     }
     ```
+     Inputs
 
-    * Instructions may be grouped into one insert block only if their **total byte size exactly fits** the target region.
+      You are provided with the following files:
 
-    IMPORTANT: All assembly instructions must be compatible with Ghidra’s Sleigh assembler.
-    Avoid using BYTE PTR, DWORD PTR, MOVABS, or any MASM/NASM-specific syntax.
-    Use simple forms like MOV [0xADDRESS], REGISTER or TEST [0xADDRESS], IMM.
-    Use MOV REG, IMM for immediate moves. Stick to uppercase opcodes.
+      Binary path: {binary_path}
 
+      Free memory regions:
 
-    ### Layered Obfuscation Support
+      free_memory_ge12.json — regions ≥ 12 bytes (for Dead Code Insertion)
 
-    Each object must specify a `"layer"` integer to define patch order:
+      free_memory_lt12.json — regions < 12 bytes (for Arithmetic Branch Replacement)
 
-    * `0` = apply first
-    * `1` = apply after layer 0
-    * And so on...
+      Conditional branches:
 
-    ---
-    **Final Notes**:
+      conditional_branches.json — all conditional branches in the binary (Choose the branch with JZ or JNZ as the Jump instruction)
 
-    * This patch plan will be used to generate **real binary patches**, so it must be:
+      Selected techniques:
 
-      * **Accurate**
-      * **Size-matched**
-      * **Safe**
-      * **Syntactically valid JSON**
+      selected_techniques.json — descriptions and constraints of selected obfuscation methods
 
-    Any invalid address, instruction, or structure may corrupt the binary.
+     **Requirements & Constraints**
 
+      1. Instruction Safety
 
+      Use only allowed registers listed above.
+
+      Do not use 64-bit registers or invalid syntax.
+
+      2. Memory Safety
+
+      Patches must target only free memory.
+
+      Do not overwrite live code unless verified safe.
+
+      3. Follow Techniques Precisely
+
+      Techniques must match what’s described in selected_techniques.json.
+
+      4. Byte-Level Precision
+
+      Instruction sizes must exactly match the available bytes.
+
+      Group instructions only if their combined size fits the region.
+
+      5. Address Validity
+
+      Before using any address, call toAddr() and check for null.
+
+      Skip the patch or label if the address is invalid.
+
+    **Note: Use "NZ" instead of "NE" — Ghidra does not support NE.
+
+      Layered Obfuscation
+
+      Each patch must include a "layer" field:
+
+      0 = Apply first
+
+      1 = Apply after layer 0
+
+      2, 3, etc.
+
+      **Final Notes**
+
+      This patch plan will be used to generate real binary patches, so it must be:
+
+      Accurate
+
+      Size-matched
+
+      Safe
+
+      Valid JSON
+
+      Any invalid field, instruction, or structure can corrupt the binary.
 
   expected_output: |
     A JSON array where each object contains:
@@ -170,6 +183,36 @@ plan_binary_obfuscation_patches:
       - "addresses": insert/replace info, including exact VA and instructions
       - "operands": all used registers, constants, and label targets
       - "layer": obfuscation layer index (order)
+      {
+        "type": "junk insertion",
+        "addresses": {
+          "insert": [
+            {
+              "address": "0x00408024",
+              "instructions": [
+                "XOR EAX, EAX",
+                "ADD EAX, 10h"
+              ]
+            }
+          ],
+          "replace": [
+            {
+              "address": "0x00408030",
+              "instruction": "je 0x00408100",
+              "replacement": [
+                "CMP EAX, 0h",
+                "JZ 0x00408100"
+              ]
+            }
+          ]
+        },
+        "operands": {
+          "registers": ["EAX"],
+          "constants": [0, 16],
+          "labels": ["0x00408100"]
+        },
+        "layer": 0
+      }
 
   agent: binary_patch_planner_agent
   output_file: patch_locations.json
@@ -178,13 +221,13 @@ plan_binary_obfuscation_patches:
 apply_obfuscations_task:
   name: "Generate Ghidra Patch Script"
   description: |
-    Generate a Java-based Ghidra script named **ApplyObfuscationTechniques.java** (with a public class `ApplyObfuscationTechniques` extending `GhidraScript`) that applies multiple binary-level obfuscation techniques using the Ghidra scripting API. The obfuscation steps must follow the patching instructions defined in a plan provided by `plan_binary_obfuscation_patches`. The output must be only the complete source code—no comments, no explanations.
+    Generate a Java-based Ghidra script named **ApplyObfuscationTechniques.java** (with a public class `ApplyObfuscationTechniques` extending `GhidraScript`) that applies multiple binary-level obfuscation techniques using the Ghidra scripting API. The obfuscation steps must follow the patching instructions defined in a plan provided by `plan_binary_obfuscation_patches`. The output must be only the complete source code—no comments, no explanations. no brackets or ```java before and after the code.
 
     **High-Level Requirements**  
     - A single public class named `ApplyObfuscationTechniques extends GhidraScript`.  
     - Script must apply binary patches based on the patch plan from `plan_binary_obfuscation_patches`.  
-    - No GUI or user input.  
-    - At the end of `run()`, invoke `runScript("RenameVariablesObfuscation.java");`.  
+    - No GUI or user input.
+    - The instrunction should be compatible with Ghidra's Sleigh assembler with 32-bit architecture.
 
     **Setup in `run()`**  
     1. Declare a class-level field:  
@@ -223,29 +266,29 @@ apply_obfuscations_task:
       createLabel(toAddr("0x140001600"), "dispatcher_label", true);
       ```  
 
-    **Instruction Syntax**  
-    - Use uppercase Intel-style x86-64 mnemonics (`NOP`, `MOV`, `ADD`, `CMP`, `JMP`, etc.).
+      **Note**: Conditional move instructions (`CMOVcc`) must always include their condition suffix (e.g., `CMOVZ`, `CMOVNZ`). Plain `CMOVE` is **not valid syntax** in Ghidra's Sleigh assembler.
+
 
     **Allowed Imports Only**  
-    ```java
     import ghidra.app.script.GhidraScript;
     import ghidra.app.plugin.assembler.*;
     import ghidra.program.model.address.*;
     import ghidra.util.exception.*;
     import ghidra.program.model.listing.*;
-    ```  
 
     **Final Output**  
     Output only the complete, executable Java class source code for `ApplyObfuscationTechniques.java`, including:  
-    - The `run()` method calling each obfuscation technique method and ending with `runScript(...)`.  
+    - The `run()` method calling each obfuscation technique method.  
     - Each obfuscation technique in its own `private void` method.  
     - The `patchInstructions(...)` helper (Optional)
     - No surrounding explanation or markdown—just the Java source.
+    - No comments, no explanations, no brackets or ```java before and after the code.
+    - No extra lines or spaces.
     
 
   expected_output: |
     The script must be a fully functional and directly executable Ghidra Java script named `ApplyObfuscationTechniques.java`. The output must include only the **entire source code**, formatted as a complete Java class—no explanations, comments, or diagnostic output:
-    ```java
+    
     import ghidra.app.script.GhidraScript;
     import ghidra.app.plugin.assembler.*;
     import ghidra.program.model.address.*;
@@ -263,7 +306,6 @@ apply_obfuscations_task:
            .......
             ``` add your obfuscation techniques here ```
             .......
-            runScript("RenameVariablesObfuscation.java");
         }
 
         private void insertDeadCode() throws Exception {
@@ -272,18 +314,22 @@ apply_obfuscations_task:
 
         .......
     }
-    ```
 
   agent: ghidra_patch_agent
-  output_file: ghidra_scripts/ApplyObfuscationTechniques.java
+  output_file: /src/obfuscation_deobfuscation_flow/crews/binaryobfuscationcrew/ghidra_scripts/ApplyObfuscationTechniques.java
 
 
-patching_task:
-  name: "Patch Transformed Binary"
+ghidra_script_runner_task:
+  name: "Run Ghidra Patch Script"
   description: |
-    First, Use Ghidra to run ApplyObfuscationTechniques.java on the binary usi
-    This will apply the bytecode transformations, reassemble the binary, and save it to:
-    C:\Users\celin\Desktop\usj\FYP\agentic_obfuscator_deobfuscator_system\agentic_obfuscator_deobfuscator\src\obfuscation_deobfuscation_crew\tools\ghidra_output\obfuscated_binary.exe
+    Execute the Ghidra script **ApplyObfuscationTechniques.java** to apply the obfuscation techniques to the binary at `{binary_path}`. The script must be run in a Ghidra environment with the current program set to the target binary.
+
+    **Requirements**:
+    - Use the Ghidra API to run the script.
+    - Ensure that the script runs without user interaction.
+    - Handle any exceptions that may occur during script execution.
+
   expected_output: |
-    Binary successfully patched and exported to obfuscated_binary.exe
-  agent: ghidra_patch_agent
+    The output should confirm successful execution of the Ghidra script, including any errors or warnings encountered during the process.
+
+  agent: ghidra_script_runner_agent

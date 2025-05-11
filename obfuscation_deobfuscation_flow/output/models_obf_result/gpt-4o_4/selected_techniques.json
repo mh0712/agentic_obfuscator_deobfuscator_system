@@ -1,0 +1,69 @@
+[
+  {
+    "technique_name": "Variable Renaming",
+    "description": "Replace variable and function names with randomly generated strings to hinder readability and reverse engineering.",
+    "parameters": {
+      "name_length": 8,
+      "allowed_characters": "abcdefghijklmnopqrstuvwxyz_0123456789"
+    },
+    "llm_prompt": "Task:\nApply variable renaming to the following code by replacing all function names, parameter names, and variable names with unique, meaningless identifiers.\nConstraints:\n- All new names must be exactly {{name_length}} characters long.\n- Only use lowercase letters from this set: '{{allowed_characters}}'.\n- Avoid Python/JavaScript keywords and built-in names.\n- Ensure the obfuscated code remains functional and syntactically valid.\n- Do not alter string literals, comments, or any external API/library names.\n- Maintain formatting and indentation of the original code.\n\n Input code:\n```{{language}}\n{{code}}\n```",
+    "layering_priority": 6,
+    "metrics_score": 3,
+    "reasoning": "This technique aligns with the language compatibility (Python) and complexity metrics, given there are more than 3 identifiers. It will increase complexity enough to disguise the code without impacting functionality."
+  },
+  {
+    "technique_name": "String Encryption",
+    "description": "Encrypt or encode all string literals using a reversible method, storing them in variables or decoding functions to prevent static analysis.",
+    "parameters": {
+      "method": "base64",
+      "variable_name_length": 8,
+      "allowed_characters": "abcdefghijklmnopqrstuvwxyz"
+    },
+    "llm_prompt": "Task:\nObfuscate the following code by encrypting all string literals using the {{method}} encoding technique. Inject lightweight runtime decoding logic to restore original strings dynamically during execution.\nConstraints:\n- Apply encryption to all plain string literals, including:\n      - Printed messages\n      - Assignments\n      - Return values\n      - Conditionals and comparisons\nDo NOT encode:\n- Import/module/include statements\n- External file paths or URLs\n- Documentation strings or annotations\n  Ensure encoded strings are not recognizable at a glance (e.g., no clear base64/plaintext chunks).\n  Place decoder logic in a non-obvious location (e.g., in a helper function or a lambda).\n  Decoder must execute just-in-time, restoring strings only when needed.\n\nExample Transformations:\nPython (with Base64):\nimport base64\ndef axz(s): return base64.b64decode(s).decode()\nprint(axz('SGVsbG8sIHdvcmxkIQ=='))\nJavaScript (with XOR):\n\njavascript\nfunction jg(x){return x.split('').map(c=>String.fromCharCode(c.charCodeAt(0)^42)).join('');}\nconsole.log(jg('\\u001f\\u000f\\u0017\\u0017'));\n\n Input code:\n```{{language}}\n{{code}}\n```",
+    "layering_priority": 8,
+    "metrics_score": 5,
+    "reasoning": "Since there are a significant number of string literals, this technique will add an additional layer of complexity and is therefore well-suited for the provided complexity metrics."
+  },
+  {
+    "technique_name": "Opaque Predicates",
+    "description": "Introduce opaque predicates that evaluate to always true or false but appear complex, making the control flow harder to analyze.",
+    "parameters": {
+      "insertion_frequency": "moderate",
+      "predicate_type": "always_true",
+      "variable_name_length": 8,
+      "allowed_characters": "abcdefghijklmnopqrstuvwxyz"
+    },
+    "llm_prompt": "Task:\nObfuscate the following {{language}} code by injecting opaque predicates that:\n- Add conditional logic that always evaluates to {{predicate_type}}.\n- Are resistant to static analysis, symbolic execution, and pattern matching.\n- Do not affect the actual execution flow of the original program.\n\nOpaque predicates must include:\n- Non-trivial math (e.g., modulo with large primes, bit tricks).\n- Environment-based values (e.g., timestamps, system state) when possible.\n- All opaque branches that donâ€™t affect execution must contain no-ops, decoy logic, or junk calls (e.g., unreachable dummy functions).\n- Any helper variables or functions must use meaningless {{variable_name_length}}-character names composed from the character set '{{allowed_characters}}'.\n- Maintain full semantic equivalence and ensure the final code is valid and executable.\n\nExamples of opaque predicates:\nPython:\n# Always True: XOR with self is 0\nif ((1337 ^ 1337) == 0):\n    pass\n\n# Always False: 1234 AND 0 is 0\nif ((1234 & 0) != 0):\n    pass\n\n# Always True: String lengths match\nif (len('obfuscation') == len('obfuscation')):\n    pass\n\n# Always True: Modulo trick\nif ((42 * 17 + 1) % 17 == 1):\n    pass\n\n# Always False: ID of two different objects is never equal\nif (id(object()) == id(object())):\n    pass\n\n# Always True: Functionally obscure\nif (all([True for _ in range(3)]) and not False):\n    pass\n\nJavaScript:\n    // Always True: 999 ^ 999 === 0\nif ((999 ^ 999) === 0) {\n    // true\n}\n\n// Always False: Random-looking logic, but known result\nif (((Math.floor(Date.now()) % 2) + 1) === 3) {\n    // false\n}\n\n// Always True: x ^ x = 0\nlet x = 123;\nif (((x ^ x) + 0) === 0) {\n    // true\n}\n\n// Always False: Empty string !== ' '\nif ('' === ' ') {\n    // false\n}\n\n// Always True: type coercion with number\nif (parseInt('0x2A') === 42) {\n    // true\n}\n\n// Always True: Random-seeming math, but deterministic\nif (((2 << 3) / 4) === 4) {\n    // (2 * 8) / 4 = 16 / 4 = 4\n}\n\n Input code:\n```{{language}}\n{{code}}\n```",
+    "layering_priority": 2,
+    "metrics_score": 6,
+    "reasoning": "Given that there are enough control structures, introducing opaque predicates will help obscure the control flow of the program without disrupting its functionality."
+  },
+  {
+    "technique_name": "Dead Code Injection",
+    "description": "Inject non-functional code blocks that don't affect runtime behavior to mislead code readers and analysis tools.",
+    "parameters": {
+      "noise_density": 0.2,
+      "allowed_dead_types": ["useless loops", "always-false ifs", "unused functions"]
+    },
+    "llm_prompt": "Task:\nApply dead code injection to the following {{language}} code with the goal of increasing reverse engineering resistance without altering its behavior.\n\nConstraints:\nInject non-functional code that does not affect runtime behavior, including:\nUnused variables\nDead branches (always-false or never-executed)\nDummy functions\n\nMaintain original behavior and observable output.\nSpread dead code naturally and sparsely across logical blocks, respecting a density of {{noise_density}}.\nInjection Rules:\nUse only these types of dead code: {{allowed_dead_types | join(', ')}}.\n- Dead code must not be trivially detectable, and should include:\n- Nonsensical names ({{variable_name_length}}-character identifiers from '{{allowed_characters}}')\n- Semi-plausible logic (e.g., math formulas, empty I/O, or unreachable nested branches)\n- Conditional wrappers or loops that look real but never execute\n\nExamples of harder dead code:\nPython:\njmuyhiouh = sum([i*i for i in range(10)])  \ndef zgf(): return len('decoy') * 123\nif False or 1 < 0: zgf()\n\nJavaScript:\nlet binonmkl = Math.pow(7, 4); \nfunction qxw() { return new Date().getTimezoneOffset(); }\nif (false && true) { qxw(); }\n\n Input code:\n```{{language}}\n{{code}}\n```",
+    "layering_priority": 4,
+    "metrics_score": 4,
+    "reasoning": "The presence of code blocks and control structures makes the injection of dead code feasible here as it helps in misdirecting static analysis without altering the code's logic."
+  },
+  {
+    "technique_name": "Array Folding",
+    "description": "Consolidate multiple constants or values into arrays or objects, accessing them by index to obscure original usage.",
+    "parameters": {
+      "fold_literals": true,
+      "fold_identifiers": true,
+      "use_index_aliasing": true,
+      "use_shuffled_array": true,
+      "use_multidimensional_folding": true,
+      "use_constant_reconstruction": true
+    },
+    "llm_prompt": "Task:\n Obfuscate the following code using advanced array folding, applying transformations that preserve semantic behavior but significantly hinder reverse engineering.\n Replace hardcoded literals and identifiers (with array lookups).\n - Index Aliasing \n - Multi-dimensional Folding\n - Shuffled Array + Index Map\n - Split Constant Reconstruction\n\n Example â€“ Combined Techniques:\n Before:\n print('Hello World')\n After (with all features enabled):\n\n _ = ['rld', 'He', 'llo ', 'Wo']\n m = [1, 2, 3, 0]\n s = _[m[1]] + _[m[2]] + _[m[3]] + _[m[0]]\n print(s)\n\n  Input code:\n ```{{language}}\n {{code}}\n ```",
+    "layering_priority": 5,
+    "metrics_score": 6,
+    "reasoning": "The number of literals in the code allows for effective usage of array folding to obscure constant values and access patterns, which significantly hinders reverse engineering."
+  }
+]

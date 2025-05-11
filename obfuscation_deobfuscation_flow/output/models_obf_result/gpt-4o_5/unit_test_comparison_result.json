@@ -1,0 +1,27 @@
+{
+  "semantically_equivalent": true,
+  "test_results": [
+    {
+      "test_name": "greet_vs_oofkmrmd",
+      "input": ["John", "", "J@hn"],
+      "original_output": ["Hello, John!", "Hello, !", "Hello, J@hn!"],
+      "obfuscated_output": ["Hello, John!", "Hello, !", "Hello, J@hn!"],
+      "match": true
+    },
+    {
+      "test_name": "add_vs_azvqbtpx",
+      "input": [(5, 10), (-3, 7), (0, 0)],
+      "original_output": [15, 4, 0],
+      "obfuscated_output": [15, 4, 0],
+      "match": true
+    },
+    {
+      "test_name": "complex_function_vs_xtclbtwf",
+      "input": [0, 1, -1],
+      "original_output": [0, 992.5145291394504, -992.5145291394504],
+      "obfuscated_output": [0, 992.5145291394504, -992.5145291394504],
+      "match": true
+    }
+  ],
+  "error": null
+}

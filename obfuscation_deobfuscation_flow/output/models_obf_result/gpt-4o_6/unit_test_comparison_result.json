@@ -1,0 +1,71 @@
+```json
+{
+  "semantically_equivalent": true,
+  "test_results": [
+    {
+      "test_name": "greet",
+      "input": "John",
+      "original_output": "Hello, John!",
+      "obfuscated_output": "Hello, John!",
+      "match": true
+    },
+    {
+      "test_name": "add",
+      "input": [5, 10],
+      "original_output": 15,
+      "obfuscated_output": 15,
+      "match": true
+    },
+    {
+      "test_name": "add",
+      "input": [-5, 5],
+      "original_output": 0,
+      "obfuscated_output": 0,
+      "match": true
+    },
+    {
+      "test_name": "add",
+      "input": [-3, -7],
+      "original_output": -10,
+      "obfuscated_output": -10,
+      "match": true
+    },
+    {
+      "test_name": "add",
+      "input": [0, 0],
+      "original_output": 0,
+      "obfuscated_output": 0,
+      "match": true
+    },
+    {
+      "test_name": "add",
+      "input": [123456789, 987654321],
+      "original_output": 1111111110,
+      "obfuscated_output": 1111111110,
+      "match": true
+    },
+    {
+      "test_name": "complex_function",
+      "input": 42,
+      "original_output": 41020.253843189836,
+      "obfuscated_output": 41020.253843189836,
+      "match": true
+    },
+    {
+      "test_name": "complex_function",
+      "input": 0,
+      "original_output": 0.0,
+      "obfuscated_output": 0.0,
+      "match": true
+    },
+    {
+      "test_name": "complex_function",
+      "input": -5,
+      "original_output": -207126.68362645072,
+      "obfuscated_output": -207126.68362645072,
+      "match": true
+    }
+  ],
+  "error": null
+}
+```

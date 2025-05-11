@@ -1,0 +1,55 @@
+```json
+[
+    {
+        "technique_name": "Variable Renaming",
+        "description": "Replace variable and function names with randomly generated strings to hinder readability and reverse engineering.",
+        "parameters": {
+            "name_length": 8,
+            "allowed_characters": "abcdefghijklmnopqrstuvwxyz_0123456789"
+        },
+        "llm_prompt": "Task:\nApply variable renaming to the following code by replacing all function names, parameter names, and variable names with unique, meaningless identifiers.\nConstraints:\n- All new names must be exactly 8 characters long.\n- Only use lowercase letters from this set: \"abcdefghijklmnopqrstuvwxyz_0123456789\".\n- Avoid Python/JavaScript keywords and built-in names.\n- Ensure the obfuscated code remains functional and syntactically valid.\n- Do not alter string literals, comments, or any external API/library names.\n- Maintain formatting and indentation of the original code.\n\nInput code:\n```python\n{{code}}\n```",
+        "layering_priority": 6,
+        "metrics_score": 8.5,
+        "reasoning": "Variable Renaming is compatible with Python and does not conflict with other selected techniques. With a medium complexity, it effectively obfuscates identifiers, which are abundant in the code."
+    },
+    {
+        "technique_name": "String Encryption",
+        "description": "Encrypt or encode all string literals using a reversible method, storing them in variables or decoding functions to prevent static analysis.",
+        "parameters": {
+            "method": "base64",
+            "variable_name_length": 8,
+            "allowed_characters": "abcdefghijklmnopqrstuvwxyz"
+        },
+        "llm_prompt": "Task:\nObfuscate the following code by encrypting all string literals using the base64 encoding technique. Inject lightweight runtime decoding logic to restore original strings dynamically during execution.\nConstraints:\n- Apply encryption to all plain string literals, including printed messages, assignments, return values, conditionals, and comparisons.\nDo NOT encode import/module/include statements, external file paths or URLs, documentation strings, or annotations.\nEnsure encoded strings are not recognizable at a glance (e.g., no clear base64/plaintext chunks).\nPlace decoder logic in a non-obvious location (e.g., in a helper function or a lambda).\nDecoder must execute just-in-time, restoring strings only when needed.\n\nInput code:\n```python\n{{code}}\n```",
+        "layering_priority": 8,
+        "metrics_score": 9.0,
+        "reasoning": "String Encryption is selected for its ability to handle string literals extensively present in the code. This transformation significantly raises the difficulty of reverse engineering."
+    },
+    {
+        "technique_name": "Opaque Predicates",
+        "description": "Introduce opaque predicates that evaluate to always true or false but appear complex, making the control flow harder to analyze.",
+        "parameters": {
+            "insertion_frequency": "moderate",
+            "predicate_type": "always_true",
+            "variable_name_length": 8,
+            "allowed_characters": "abcdefghijklmnopqrstuvwxyz"
+        },
+        "llm_prompt": "Task:\nObfuscate the following python code by injecting opaque predicates that add conditional logic that always evaluates to always_true. \nThey are resistant to static analysis, symbolic execution, and pattern matching, and do not affect the actual execution flow of the original program.\n\nOpaque predicates must include non-trivial math, environment-based values, and include unreachable dummy functions. Ensure the final code is valid and executable.\n\nInput code:\n```python\n{{code}}\n```",
+        "layering_priority": 2,
+        "metrics_score": 8.0,
+        "reasoning": "Opaque Predicates are compatible with Python and enhance the obscurity of control flow, thus strengthening the code's resilience against reverse engineering. Conflict with Dead Code Injection is managed by prioritizing predicates."
+    },
+    {
+        "technique_name": "Function Outlining",
+        "description": "Break down complex functions into smaller, less meaningful helper functions to increase confusion and reduce analysis accuracy.",
+        "parameters": {
+            "min_functions": 2,
+            "function_name_length": 8
+        },
+        "llm_prompt": "Task:\nObfuscate the following python code by breaking complex functions into smaller helper functions.\nEach helper function should have a meaningless name and perform a small, seemingly unrelated task.\nDo not alter the overall functionality of the program.\nUse random names for each new function.\n\nInput code:\n```python\n{{code}}\n```",
+        "layering_priority": 1,
+        "metrics_score": 8.7,
+        "reasoning": "Function Outlining is highly supportive for fragmenting functions, ensuring that logical flow analysis becomes challenging without compromising original functionality. This lays the foundation for other intricate obfuscations."
+    }
+]
+```

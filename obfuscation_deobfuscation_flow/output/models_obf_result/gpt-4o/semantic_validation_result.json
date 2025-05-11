@@ -1,0 +1,13 @@
+```json
+{
+  "equivalence": true,
+  "details": {
+    "inputs": [],
+    "outputs": [
+      "Hello, John!\nThe sum of 5 and 10 is: 15\nComplex function result: 210714.3584140265"
+    ],
+    "exceptions": [],
+    "summary": "The outputs of both the original and obfuscated code are functionally equivalent under identical input conditions. No discrepancies in behavior or output were found."
+  }
+}
+```

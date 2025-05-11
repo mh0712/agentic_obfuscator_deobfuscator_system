@@ -1963,6 +1963,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "crewai", extra = ["tools"] },
+    { name = "docker" },
     { name = "pycryptodome" },
     { name = "python-magic-bin" },
     { name = "radon" },
@@ -1972,6 +1973,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "crewai", extras = ["tools"], specifier = ">=0.114.0,<1.0.0" },
+    { name = "docker", specifier = ">=7.1.0" },
     { name = "pycryptodome", specifier = ">=3.22.0" },
     { name = "python-magic-bin", specifier = ">=0.4.14" },
     { name = "radon", specifier = ">=6.0.1" },

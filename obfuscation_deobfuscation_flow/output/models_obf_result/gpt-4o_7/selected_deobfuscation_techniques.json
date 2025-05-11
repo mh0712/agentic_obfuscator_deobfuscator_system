@@ -1,0 +1,47 @@
+[
+  {
+    "technique_name": "String Decoding (XOR/Base64/Custom Obfuscation)",
+    "description": "Deobfuscate and inline hidden or encoded strings that have been obfuscated using encoding mechanisms such as XOR, Base64, or custom logic.",
+    "parameters": {},
+    "llm_prompt": "Perform **advanced and complete deobfuscation** on obfuscated JavaScript code that uses **string encoding and decoding mechanisms** to hide readable strings.",
+    "layering_priority": 1,
+    "metrics_score": 5,
+    "reasoning": "The code contains multiple instances of Base64 encoded strings that require decoding to uncover the actual source strings used within the program logic."
+  },
+  {
+    "technique_name": "Variable Recovery",
+    "description": "Recover meaningful variable names and restore semantic clarity in code that has been obfuscated by aggressive renaming or mangling.",
+    "parameters": {},
+    "llm_prompt": "Recover original intent behind variables by inferring meaningful names and deobfuscating misleading identifiers.",
+    "layering_priority": 2,
+    "metrics_score": 5,
+    "reasoning": "The code consists of variable names like '_0x47a6' that are non-descriptive and need to be reverted to names that reflect their purpose for better readability."
+  },
+  {
+    "technique_name": "Self-Defending Removal",
+    "description": "Removes or neutralizes self-defending logic that could disrupt code analysis and debugging due to traps or anti-tamper routines.",
+    "parameters": {},
+    "llm_prompt": "Neutralize self-defending obfuscation logic so that analysis and debugging can proceed without interruptions.",
+    "layering_priority": 3,
+    "metrics_score": 4,
+    "reasoning": "Recognizing potential self-defending logic will ensure seamless analysis by removing any mechanisms that could interfere with reverse engineering or beautification tasks."
+  },
+  {
+    "technique_name": "Control Flow Flattening",
+    "description": "Reconstruct natural control structures that have been flattened using dispatch tables, state machines, or similar mechanisms designed to obscure logical code execution paths.",
+    "parameters": {},
+    "llm_prompt": "Identify and reverse control flow flattening and restore the original logical structure.",
+    "layering_priority": 4,
+    "metrics_score": 4,
+    "reasoning": "Normalizing the flow ensures that the functional structure of the code matches the intended logic."
+  },
+  {
+    "technique_name": "Debug Protection Neutralization",
+    "description": "Detects and removes debug protection logic, including infinite debugger loops, debugger traps, and anti-debugging traps.",
+    "parameters": {},
+    "llm_prompt": "Neutralize all debug protection mechanisms while keeping the rest of the application code 100% functionally intact.",
+    "layering_priority": 5,
+    "metrics_score": 3,
+    "reasoning": "Ensuring removability of debugger protection ensures the deobfuscated code remains entirely inspectable and analyzable without obfuscation-related disruptions."
+  }
+]

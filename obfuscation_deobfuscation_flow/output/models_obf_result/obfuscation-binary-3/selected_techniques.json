@@ -1,0 +1,109 @@
+```json
+[
+  {
+    "technique_name": "Arithmetic Branch Replacement",
+    "function_name": "applyArithmeticBranchReplacement",
+    "description": "Obfuscates conditional control flow by replacing direct conditional jumps with flag-based and arithmetic redirection.",
+    "reasoning": "This technique is effective for obfuscating conditional logic where there are existing jump targets and available free space for additional logic. Utilizing indirect arithmetic-based branches breaks static control flow analysis and flattens control graphs.",
+    "exampleOriginal": [
+      "CMP REG, IMM",
+      "JZ AddressA"
+    ],
+    "exampleObfuscated": [
+      "CMP REG, IMM",
+      "SETZ BL",
+      "XOR EBX, 1",
+      "MOVZX EBX, BL",
+      "MOV ESI, AddressA",
+      "MOV EDI, AddressNext",
+      "CMP BL, 0",
+      "CMOVZ ESI, EDI",
+      "JMP ESI"
+    ],
+    "implementationNotes": [
+      "Check conditional_branches.json for jump instructions and redirect addresses.",
+      "Confirm free memory space in free_memory_ge12.json and ensure enough free bytes for the arithmetic logic.",
+      "Replace the jump address without altering other instructions, ensuring indirect jumps lead effectively.",
+      "Write arithmetic logic in free regions specified in free_memory_ge12.json."
+    ],
+    "ghidraSample": {
+      "javaMethod": "applyArithmeticBranchReplacement",
+      "code": [
+        "import ghidra.app.script.GhidraScript;",
+        "import ghidra.app.plugin.assembler.*;",
+        "import ghidra.program.model.address.*;",
+        "import ghidra.util.exception.*;",
+        "",
+        "// Applies arithmetic-based control flow obfuscation at the specified comparison site.",
+        "private void applyArithmeticBranchReplacement(Address cmpAddr, Address jumpTarget, Address callTarget) throws AssemblySyntaxException, Exception {",
+        "    println(\"Applying Arithmetic Branch Replacement at: \" + cmpAddr);",
+        "    ",
+        "    // Example: replaces CMP + Jcc + CALL with CMP + SETcc + arithmetic + CALL",
+        "    asm.assemble(cmpAddr, \"CMP ECX, 0x5\"); // Replace with context-specific comparison",
+        "    asm.assemble(cmpAddr.add(3), \"SETZ BL\"); // Replace SETZ/SETNE based on branch logic",
+        "    asm.assemble(cmpAddr.add(5), \"XOR EBX, 1\"); // Inverts branch outcome if needed",
+        "    asm.assemble(cmpAddr.add(8), \"MOVZX EBX, BL\");",
+        "    asm.assemble(cmpAddr.add(11), \"MOV ESI, \" + jumpTarget);",
+        "    asm.assemble(cmpAddr.add(16), \"MOV EDI, \" + callTarget);",
+        "    asm.assemble(cmpAddr.add(21), \"CMP BL, 0\");",
+        "    asm.assemble(cmpAddr.add(24), \"CMOVZ ESI, EDI\");",
+        "    asm.assemble(cmpAddr.add(28), \"JMP ESI\");",
+        "    ",
+        "    println(\"Arithmetic Branch Replacement complete.\");",
+        "}"
+      ]
+    }
+  },
+  {
+    "technique_name": "Dead Code Insertion",
+    "function_name": "applyDeadCodeInsertion",
+    "description": "Injects semantically neutral instructions that do not modify program state, control flow, or output, making reverse engineering harder by introducing misleading or redundant code patterns.",
+    "reasoning": "This technique increases the complexity of static analysis and disrupts pattern matching by injecting redundant and misleading code. It's suitable for non-critical execution paths and free memory regions.",
+    "exampleOriginal": [
+      "PUSH EBP",
+      "MOV EBP,ESP",
+      "MOV EAX,dword ptr [EBP + 0x8]",
+      "IMUL EAX,EAX",
+      "POP EBP",
+      "RET"
+    ],
+    "exampleObfuscated": [
+      "PUSH EBP",
+      "MOV EBP,ESP",
+      "XOR EAX, EAX",
+      "ADD EAX, 0x0",
+      "MOV EAX,dword ptr [EBP + 0x8]",
+      "IMUL EAX,EAX",
+      "SUB EAX, 0x0",
+      "POP EBP",
+      "RET"
+    ],
+    "implementationNotes": [
+      "Ensure inserted instructions do not alter critical flags or register values.",
+      "Avoid dead code in timing-sensitive or strictly ordered sequences.",
+      "Use free memory regions for insertion, confirmed by free_memory_lt12.json.",
+      "Mix real logic and dead code to obscure control flow boundaries."
+    ],
+    "ghidraSample": {
+      "javaMethod": "applyDeadCodeInsertion",
+      "code": [
+        "import ghidra.app.script.GhidraScript;",
+        "import ghidra.app.plugin.assembler.*;",
+        "import ghidra.program.model.address.*;",
+        "import ghidra.util.exception.*;",
+        "",
+        "// Inserts semantically neutral instructions at the given address locations.",
+        "private void applyDeadCodeInsertion(List<Address> insertPoints) throws AssemblySyntaxException, Exception {",
+        "    println(\"Applying Dead Code Insertion at selected addresses...\");",
+        "    for (Address addr : insertPoints) {",
+        "        asm.assemble(addr, \"XOR R8D, R8D\");",
+        "        asm.assemble(addr.add(2), \"ADD R8D, 2\");",
+        "        asm.assemble(addr.add(5), \"SUB R8D, 2\");",
+        "    }",
+        "    println(\"Dead Code Insertion complete.\");",
+        "}"
+      ]
+    }
+  }
+]
+```

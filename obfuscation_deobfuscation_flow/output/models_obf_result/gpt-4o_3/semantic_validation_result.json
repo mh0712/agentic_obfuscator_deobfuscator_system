@@ -1,0 +1,28 @@
+{
+  "equivalence": false,
+  "report": {
+    "input_values": [
+      {
+        "frsnxlln": "John",
+        "lwpirglu": [5, 10],
+        "xcigdogo": 42
+      }
+    ],
+    "original_code_output": [
+      "Hello, John!",
+      "The sum of 5 and 10 is: 15",
+      "Complex function result: 9442.465633399135"
+    ],
+    "obfuscated_code_output": [
+      "Hello, John!",
+      "The sum of 5 and 10 is: 15",
+      "Complex function result: Infinity"
+    ],
+    "exceptions": {
+      "original_code": null,
+      "obfuscated_code": null
+    },
+    "summary": "The outputs of the original and obfuscated code differ in the result of the `xcigdogo` function. While the original code returns a finite floating-point number, the obfuscated code returns 'Infinity'.",
+    "recommendation": "Discrepancy in the results of the `xcigdogo` function necessitates investigation of the obfuscation process, focusing on possible alterations in calculation accuracy or logic in loops and divisions."
+  }
+}

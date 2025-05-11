@@ -20,14 +20,14 @@ def detect_code_format(file_path: str) -> dict:
 
     # First: Check if MIME type indicates a binary
     if mime_type in BINARY_MIME_TYPES:
-        return {"type": mime_type, "language": "binary", "obfuscated": None, "confidence": 0.0}
+        return {"type": mime_type, "language": "binary", "obfuscated": False}
 
     # Fallback: Try to read as text
     try:
         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
             code = f.read()
     except Exception:
-        return {"type": mime_type or "unknown", "language": "unknown", "obfuscated": None, "confidence": 0.0}
+        return {"type": mime_type or "unknown", "language": "unknown", "obfuscated": None}
 
     # Try to detect source code types
     if is_python_code(file_path):
@@ -49,4 +49,4 @@ def detect_code_format(file_path: str) -> dict:
         }
 
     # Unknown
-    return {"type": mime_type or "unknown", "language": "unknown", "obfuscated": None, "confidence": 0.0}
+    return {"type": mime_type or "unknown", "language": "unknown", "obfuscated": None}

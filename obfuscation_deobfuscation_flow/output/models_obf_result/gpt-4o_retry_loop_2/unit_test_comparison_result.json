@@ -1,0 +1,27 @@
+{
+  "semantically_equivalent": false,
+  "test_results": [
+    {
+      "test_name": "test_greet",
+      "input": "John",
+      "original_output": "Hello, John!",
+      "obfuscated_output": "KeyError: 'name'",
+      "match": false
+    },
+    {
+      "test_name": "test_add",
+      "input": "(5, 10), (-1, 1), (0, 0)",
+      "original_output": "True",
+      "obfuscated_output": "False - precision mismatch",
+      "match": false
+    },
+    {
+      "test_name": "test_complex_function",
+      "input": "42",
+      "original_output": "Approximately 872.311749",
+      "obfuscated_output": "Precision mismatch",
+      "match": false
+    }
+  ],
+  "error": "String formatting discrepancy in `evykemys`, arithmetic inaccuracies in `oxvjezwn`, logic deviation in `eyqmdisk`."
+}

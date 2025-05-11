@@ -48,6 +48,9 @@ def is_obfuscated_py(script_path):
     }
 
 
+import ast
+from radon.complexity import cc_visit
+
 def analyze_python_complexity(code: str) -> dict:
     try:
         tree = ast.parse(code)
@@ -73,9 +76,14 @@ def analyze_python_complexity(code: str) -> dict:
     num_control_structures = sum(isinstance(node, (ast.If, ast.For, ast.While, ast.Try)) for node in ast.walk(tree))
     num_code_blocks = sum(isinstance(node, (ast.FunctionDef, ast.ClassDef)) for node in ast.walk(tree))
     num_lines = len(code.splitlines())
+    num_print_statements = sum(
+        isinstance(node, ast.Expr) and isinstance(node.value, ast.Call) and
+        getattr(node.value.func, 'id', '') == 'print'
+        for node in ast.walk(tree)
+    )
 
     # Calculate the maximum nesting depth
-    nesting_depth = max([get_nesting_depth(node) for node in ast.walk(tree)])
+    nesting_depth = max([get_nesting_depth(node) for node in ast.walk(tree)], default=0)
 
     # Calculate overall cyclomatic complexity
     total_complexity = sum(c.complexity for c in complexity_scores)
@@ -93,26 +101,28 @@ def analyze_python_complexity(code: str) -> dict:
         "control_structures": num_control_structures,
         "code_blocks": num_code_blocks,
         "nesting_depth": nesting_depth,
+        "print_statements": num_print_statements,
     }
 
     # 🧠 Obfuscation-related applicability indicators (for the selector agent)
     applicability_flags = {
-        'min_lines': metrics["lines"] >= 20,
+        "min_lines": metrics["lines"] >= 20,
         "min_identifiers": metrics["identifiers"] >= 3,
         "min_functions": metrics["functions"] >= 1,
         "min_string_literals": metrics["strings"] >= 1,
-        "min_literals": metrics["literals"] >= 2,
+        "min_literals": metrics["literals"] >= 1,
         "min_code_blocks": metrics["code_blocks"] >= 2,
         "min_control_structures": metrics["control_structures"] >= 1,
         "min_boolean_expressions": metrics["booleans"] >= 1,
-        "max_nesting_depth": metrics["nesting_depth"] <= 5,  
+        "min_print_statements": metrics["print_statements"] >= 1,
+        "max_nesting_depth": metrics["nesting_depth"] <= 5,
     }
 
     return {
         "complexity_metrics": metrics,
         "applicability_flags": applicability_flags
     }
-    
+
 
 # === CONFIG ===
 NAME_LENGTH = 10
@@ -226,7 +236,7 @@ def obfuscate_py(code):
         "nt": None, "ctypes": None, "__name__": None, "__main__": None,
         "__builtins__": None, "_decrypt_str": None, "print": None,
         "Execution failed:": None, "empty": "",
-        "debugger_check": "windll.kernel32.IsDebuggerPresent()",  # Encrypted function call
+        "debugger_check": "windll.kernel32.IsDebuggerPresent()",  
         "IsDebuggerPresent": "IsDebuggerPresent"
     }
 
@@ -245,3 +255,12 @@ def obfuscate_py(code):
     obfuscated_code = build_loader(encrypted, aes_key, iv, encrypted_strings, obf_names)
     print(f"[SUCCESS] Obfuscated with key: {aes_key.hex()}")
     return obfuscated_code
+
+if __name__ == "__main__":
+    # Example usage
+    original_code = """print("Hello, World!") """
+    obfuscated_code = obfuscate_py(original_code)
+    
+    # Save to file
+    with open("obfuscated_script.py", "w") as f:
+        f.write(obfuscated_code)

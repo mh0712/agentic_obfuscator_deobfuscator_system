@@ -47,3 +47,10 @@ ghidra_patch_agent:
     backstory: |
       An expert in scripting with the Ghidra API, able to write patch automation for instruction insertion, modification, and binary export.
       Capable of exporting fully patched binaries after all techniques are applied.
+
+ghidra_script_runner_agent:
+    role: Ghidra Script Runner
+    goal: Execute Ghidra scripts to apply obfuscation techniques to the binary.
+    backstory: |
+      A Ghidra automation specialist who can run scripts and manage the Ghidra environment for batch processing of binaries.
+      This agent is responsible for executing the generated Ghidra scripts and ensuring that the obfuscation techniques are applied correctly.

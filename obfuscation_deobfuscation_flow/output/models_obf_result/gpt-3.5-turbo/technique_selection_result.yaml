@@ -1,0 +1,27 @@
+{
+    "obfuscation_techniques": [
+        {
+            "technique_name": "Boolean Obfuscation",
+            "description": "Obfuscate boolean expressions by combining multiple comparisons, logical operations, or functions that increase complexity.",
+            "parameters": {
+                "max_operations": 3
+            },
+            "llm_prompt": "Task:\nObfuscate the boolean expressions in the following Python code by combining multiple operations.\n- The goal is to make each expression harder to analyze while preserving the original logic.\n- Insert redundant comparisons or logical operations that evaluate to the same result but look more complex.\n- Maintain the overall meaning and functionality of the code.",
+            "layering_priority": 9,
+            "metrics_score": 4,
+            "reasoning": "The code complexity supports this technique, and it satisfies the conditions for boolean expression obfuscation."
+        },
+        {
+            "technique_name": "Variable Renaming",
+            "description": "Replace variable and function names with randomly generated strings to hinder readability and reverse engineering.",
+            "parameters": {
+                "name_length": 8,
+                "allowed_characters": "abcdefghijklmnopqrstuvwxyz_0123456789"
+            },
+            "llm_prompt": "Task:\nApply variable renaming to the following code by replacing all function names, parameter names, and variable names with unique, meaningless identifiers.\nConstraints:\n- All new names must be exactly 8 characters long.\n- Only use lowercase letters from this set: \"abcdefghijklmnopqrstuvwxyz_0123456789\".\n- Avoid Python keywords and built-in names.\n- Ensure the obfuscated code remains functional and syntactically valid.",
+            "layering_priority": 6,
+            "metrics_score": 3,
+            "reasoning": "Variable renaming is essential for obfuscation, and the code complexity suggests this technique would be beneficial."
+        }
+    ]
+}

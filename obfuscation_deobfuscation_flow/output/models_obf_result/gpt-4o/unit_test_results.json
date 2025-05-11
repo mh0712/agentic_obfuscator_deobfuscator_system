@@ -1,0 +1,52 @@
+```python
+# Unit tests for the original Python script
+
+import unittest
+
+class TestScriptFunctions(unittest.TestCase):
+    
+    def test_osiyqcrc(self):
+        # Decoding "SGVsbG8sIQ==" should return "Hello!"
+        self.assertEqual(osiyqcrc("SGVsbG8sIQ=="), "Hello!")
+        # Decoding "Sm9obiA=" should return "John "
+        self.assertEqual(osiyqcrc("Sm9obiA="), "John ")
+    
+    def test_pitautsl(self):
+        # This function simply prints and does not return anything
+        pass
+
+    def test_zfabdewl(self):
+        # Simple addition
+        self.assertEqual(zfabdewl(5, 10), 15)
+        self.assertEqual(zfabdewl(-1, 1), 0)
+        self.assertEqual(zfabdewl(0, 0), 0)
+
+    def test_hyaypjio(self):
+        # This is more challenging due to its complexity
+        # Given hyaypjio(42), expect certain result
+        # Not embedding expected output as it's complex to calculate here
+        result = hyaypjio(42)
+        # Since result is computationally derived and opaque, ensure no error
+        self.assertIsInstance(result, float)
+        # Asserting known expected result if you have one, e.g., from prior calculation
+        self.assertAlmostEqual(result, expected_value, places=5) # Replace 'expected_value' with actual expected result from manual calculation
+
+if __name__ == "__main__":
+    # Run tests on the original code
+    print("Testing the original code:")
+    unittest.main(argv=[''], exit=False)
+    
+    # To test the obfuscated code, ensure you replaced function definitions with obfuscated ones
+    # and rerun the tests here.
+    print("Testing the obfuscated code:")
+    # Assuming obfuscated functions are defined, replace with them and rerun
+    # unittest.main(argv=[''], exit=False) # Ensure this line is correctly set for obfuscated functions
+```
+
+- **Outcome**: The original code should print "Hello, John !" followed by "The sum of 5 and 10 is: 15" and a statement about the complex function result.
+- **Testing Strategy**: Unit tests will verify correct behavior for base64 decoding, integer addition, and complex function computation.
+- **Execution**: Replace test suite for the obfuscated version with the appropriate function definitions and rerun.
+
+For completeness:
+- Ensure expected values are manually precomputed where needed for complex functions.
+- Validate that both original and obfuscated versions provide identical output to ensure functionality is preserved.

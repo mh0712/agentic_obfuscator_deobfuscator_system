@@ -1,0 +1,46 @@
+[
+  {
+    "llm_prompt": {
+      "task": "Apply Identifier Aliasing and Proxy Import obfuscation to the given source code.",
+      "steps": [
+        "1. Identify key variables, constants, or function names in the code that are critical to its logic.",
+        "2. Create aliases for these identifiers by producing new names (e.g., `tempVar`, `hiddenFunc`) that still map to the original identifier.",
+        "3. Replace all occurrences of the original identifier with its alias throughout the code.",
+        "4. Use proxy imports by wrapping the import statements in functions and assigning the imports to obfuscated variables.",
+        "5. Ensure that the alias is used consistently and that the original name is no longer directly visible in the code.",
+        "6. Avoid making the aliases too predictable (e.g., using random or misleading names like `alpha`, `bravo`, etc.) to make it harder to trace the original variable or function names.",
+        "7. If necessary, group multiple aliases for related identifiers (e.g., multiple variables or functions) under a common name or structure.",
+        "8. Ensure the program behaves exactly as before, with no functional changes or side effects caused by the aliasing."
+      ],
+      "example": {
+        "before": [
+          "import numpy as np",
+          "import matplotlib.pyplot as plt",
+          "data = np.array([1, 2, 3, 4, 5])",
+          "plt.plot(data)",
+          "plt.show()",
+          "mean_value = np.mean(data)",
+          "print('Mean value:', mean_value)"
+        ],
+        "after": [
+          "def proxy_numpy():",
+          "    import numpy as np",
+          "    return np",
+          "np = proxy_numpy()",
+          "",
+          "def proxy_matplotlib():",
+          "    import matplotlib.pyplot as plt",
+          "    return plt",
+          "plt = proxy_matplotlib()",
+          "",
+          "data_obfuscated = np.array([1, 2, 3, 4, 5])",
+          "plt.plot(data_obfuscated)",
+          "plt.show()",
+          "mean_value_obfuscated = np.mean(data_obfuscated)",
+          "print('Mean value:', mean_value_obfuscated)"
+        ]
+      }
+    },
+    "layering_priority": 5
+  }
+]

@@ -1,0 +1,132 @@
+{
+  "functions": [
+    {
+      "function": "mainCRTStartup",
+      "blocks": [
+        {
+          "start": "004012d0",
+          "end": "004012e4",
+          "instructions": [
+            "004012d0 SUB ESP,0x1c",
+            "004012d3 MOV dword ptr [ESP],0x1",
+            "004012da CALL dword ptr [0x004091ac]",
+            "004012e0 CALL 0x004011a0"
+          ],
+          "successors": [
+            "EXTERNAL:0000001b",
+            "004011a0"
+          ],
+          "type": "entry",
+          "calls": [
+            "EXTERNAL:0000001b: __set_app_type",
+            "004011a0: FUN_004011a0"
+          ]
+        }
+      ]
+    },
+    {
+      "function": "square",
+      "blocks": [
+        {
+          "start": "00401410",
+          "end": "0040141a",
+          "instructions": [
+            "00401410 PUSH EBP",
+            "00401411 MOV EBP,ESP",
+            "00401413 MOV EAX,dword ptr [EBP + 0x8]",
+            "00401416 IMUL EAX,EAX",
+            "00401419 POP EBP",
+            "0040141a RET"
+          ],
+          "successors": [],
+          "type": "entry"
+        }
+      ]
+    },
+    {
+      "function": "vfprintf",
+      "blocks": [
+        {
+          "start": "00403ed4",
+          "end": "00403ed9",
+          "instructions": [
+            "00403ed4 JMP dword ptr [0x00409214]"
+          ],
+          "successors": [
+            "00409214",
+            "EXTERNAL:00000035"
+          ],
+          "type": "entry"
+        }
+      ]
+    },
+    {
+      "function": "tolower",
+      "blocks": [
+        {
+          "start": "00403edc",
+          "end": "00403ee1",
+          "instructions": [
+            "00403edc JMP dword ptr [0x00409210]"
+          ],
+          "successors": [
+            "00409210",
+            "EXTERNAL:00000034"
+          ],
+          "type": "entry"
+        }
+      ]
+    },
+    {
+      "function": "puts",
+      "blocks": [
+        {
+          "start": "00403f04",
+          "end": "00403f09",
+          "instructions": [
+            "00403f04 JMP dword ptr [0x004091fc]"
+          ],
+          "successors": [
+            "004091fc",
+            "EXTERNAL:0000002f"
+          ],
+          "type": "entry"
+        }
+      ]
+    },
+    {
+      "function": "printf",
+      "blocks": [
+        {
+          "start": "00403f0c",
+          "end": "00403f11",
+          "instructions": [
+            "00403f0c JMP dword ptr [0x004091f8]"
+          ],
+          "successors": [
+            "004091f8",
+            "EXTERNAL:0000002e"
+          ],
+          "type": "entry"
+        }
+      ]
+    },
+    {
+      "function": "fwrite",
+      "blocks": [
+        {
+          "start": "00403f34",
+          "end": "00403f39",
+          "instructions": [
+            "00403f34 JMP dword ptr [0x004091e4]"
+          ],
+          "successors": [
+            "004091e4",
+            "EXTERNAL:00000029"
+          ],
+          "type": "entry"
+        }
+      ]
+    }
+  ]
+}

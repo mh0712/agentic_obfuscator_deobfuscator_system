@@ -1,77 +1,51 @@
-import os
-from crewai import Agent, Crew, Process, Task
+
+
+from crewai import Agent, Crew, Process, Task, LLM
 from crewai.project import CrewBase, agent, crew, task
-from obfuscation_deobfuscation_flow.tools.python_tools import analyze_python_complexity
-from obfuscation_deobfuscation_flow.tools.javascript_tools import analyze_javascript_complexity
+
 from src.obfuscation_deobfuscation_flow.tools.build_loader import obfuscate
-from crewai.tools import tool
-from crewai_tools import CodeInterpreterTool
+from src.obfuscation_deobfuscation_flow.tools.encryption_tool import encrypt_strings
+from crewai.tools import BaseTool
 
+# class PackerTool(BaseTool):
+#     name: str = "packer_tool"
+#     description: str = "Obfuscates and secures the given code into a fully secured standalone file using AES encryption, compression, bytecode transformation, and a self-executing loader."
 
-@tool("complexity_analyzer_tool")
-def complexity_analyzer_tool(code: str, language: str) -> dict:
-    """
-    Analyze the complexity of the given code, based on its language.
-    
-    Args:
-        code (str): The code to be analyzed.
-        language (str): The programming language ('python' or 'javascript').
+#     def _run(self, code: str, language: str) -> str:
+#         try:
+#             return obfuscate(code, language=language)
+#         except Exception as e:
+#             print(f"[!] Obfuscation failed: {e}")
+#             return ""
 
-    Returns:
-        dict: A dictionary containing the complexity analysis results.
-    """
-    if language.lower() == "python":
-        return analyze_python_complexity(code)
+class EncryptionTool(BaseTool):
+    name: str = "encryption_tool"
+    description: str = "Encrypts the given code using a custom encryption method."
 
-    elif language.lower() == "javascript":
-        result = analyze_javascript_complexity(code)
-        return result
-
-    else:
-        return {"error": f"Unsupported language: {language}"}
-
-
-@tool("obfuxtreme_finalizer")
-def obfuxtreme_finalizer(code: str,language: str) -> str:
-    """
-    Obfuscates and secures the given code using the Obfuxtreme tool.
-
-    Args:
-        code (str): The source code to be transformed.
-
-    Returns:
-        str: The obfuscated and secured code.
-    """
-    try:
-        obfuscated_code = obfuscate(code,language)
-        return obfuscated_code
-    except Exception as e:
-        print(f"[!] Obfuscation failed: {e}")
-        return ""
-
+    def _run(self, code: str) -> str:
+        try:
+            return encrypt_strings(code)
+        except Exception as e:
+            print(f"[!] Encryption failed: {e}")
+            return ""
 
 
 @CrewBase
 class ScriptObfuscationCrew():
     agents_config = 'config/agents.yaml'
     tasks_config = 'config/tasks.yaml'
+
+    # === Tool Instances with result_as_answer set ===
+    encryption_tool_instance = EncryptionTool(result_as_answer=True)
+    # packer_tool_instance = PackerTool(result_as_answer=True)
     
-
-    @agent
-    def complexity_analyzer(self) -> Agent:
-        return Agent(
-            config=self.agents_config['complexity_analyzer'],
-            verbose=True,
-            tools=[complexity_analyzer_tool],
-            allow_delegation=True,
-        )
-
     @agent
     def technique_selector(self) -> Agent:
         return Agent(
             config=self.agents_config['technique_selector'],
             verbose=True,
-            allow_delegation=True,
+            max_execution_time=120,  # Reduce timeout if possible
+            max_iter=3,  # Limit iterations
         )
 
     @agent
@@ -84,48 +58,27 @@ class ScriptObfuscationCrew():
         )
 
     @agent
-    def execution_validator(self) -> Agent:
+    def string_encryptor_agent(self) -> Agent:
         return Agent(
-            config=self.agents_config['execution_validator'],
+            config=self.agents_config['string_encryptor_agent'],
             verbose=True,
-            tools =[CodeInterpreterTool()]
-        )
-        
-    @agent
-    def semantic_equivalence_validator(self) -> Agent:
-        return Agent(
-            config=self.agents_config['semantic_equivalence_validator'],
-            verbose=True,
-            tools=[CodeInterpreterTool()],
-            allow_delegation=True,
+            tools=[self.encryption_tool_instance],
+            max_execution_time=120,  # Reduce timeout if possible
+            max_iter=3,  # Limit iterations
+            max_rpm=None  # Remove rate limiting if not needed
         )
 
-    @agent
-    def feedback_loop_agent(self) -> Agent:
-        return Agent(
-            config=self.agents_config['feedback_loop_agent'],
-            verbose=True,
-            max_execution_time=120,
-            max_retry_limit=2
-        )
-    
-    @agent
-    def obfuxtreme_agent(self) -> Agent:
-        return Agent(
-            config=self.agents_config['obfuxtreme_agent'],
-            tools=[obfuxtreme_finalizer],
-            verbose=True,
-            allow_delegation=False,
-        )
-
-    @task
-    def code_complexity_analysis_task(self) -> Task:
-        return Task(
-            description=self.tasks_config['code_complexity_analysis_task']['description'],
-            expected_output=self.tasks_config['code_complexity_analysis_task']['expected_output'],
-            agent=self.complexity_analyzer(),
-            output_file=self.tasks_config['code_complexity_analysis_task']['output_file'],
-        )
+    # @agent
+    # def packer_agent(self) -> Agent:
+    #     return Agent(
+    #         config=self.agents_config['packer_agent'],
+    #         tools=[self.packer_tool_instance],
+    #         verbose=True,
+    #         allow_delegation=False,
+    #         max_execution_time=120,  # Reduce timeout if possible
+    #         max_iter=3,  # Limit iterations
+    #         max_rpm=None  # Remove rate limiting if not needed
+    #     )
 
     @task
     def technique_selection_task(self) -> Task:
@@ -133,8 +86,8 @@ class ScriptObfuscationCrew():
             description=self.tasks_config['technique_selection_task']['description'],
             expected_output=self.tasks_config['technique_selection_task']['expected_output'],
             agent=self.technique_selector(),
-            context=[self.code_complexity_analysis_task()],
             output_file=self.tasks_config['technique_selection_task']['output_file'],
+            cache=True,
         )
 
     @task
@@ -148,61 +101,35 @@ class ScriptObfuscationCrew():
         )
 
     @task
-    def excecution_validator_task(self) -> Task:
+    def string_encryptor_task(self) -> Task:
         return Task(
-            description=self.tasks_config['excecution_validator_task']['description'],
-            expected_output=self.tasks_config['excecution_validator_task']['expected_output'],
-            agent=self.execution_validator(),
+            description=self.tasks_config['string_encryptor_task']['description'],
+            expected_output=self.tasks_config['string_encryptor_task']['expected_output'],
+            agent=self.string_encryptor_agent(),
             context=[self.code_obfuscation_task()],
-            output_file=self.tasks_config['excecution_validator_task']['output_file'],
+            output_file=self.tasks_config['string_encryptor_task']['output_file'],
         )
 
-    @task
-    def semantic_equivalence_test_task(self) -> Task:
-        return Task(
-            description=self.tasks_config['semantic_equivalence_test_task']['description'],
-            expected_output=self.tasks_config['semantic_equivalence_test_task']['expected_output'],
-            agent=self.semantic_equivalence_validator(),
-            context=[self.code_obfuscation_task()],
-            output_file=self.tasks_config['semantic_equivalence_test_task']['output_file'],
-        )
-
-    @task
-    def feedback_loop_task(self) -> Task:
-        return Task(
-            description=self.tasks_config['feedback_loop_task']['description'],
-            expected_output=self.tasks_config['feedback_loop_task']['expected_output'],
-            agent=self.feedback_loop_agent(),
-            context=[self.semantic_equivalence_test_task(), self.excecution_validator_task()],
-            output_file=self.tasks_config['feedback_loop_task']['output_file'],
-        )
-
-    @task
-    def final_obfuscation_task(self) -> Task:
-       
-        return Task(
-            description=self.tasks_config['final_obfuscation_task']['description'],
-            expected_output=self.tasks_config['final_obfuscation_task']['expected_output'],
-            agent=self.obfuscation_llm(),
-            context=[self.feedback_loop_task()],
-            output_file=self.tasks_config['final_obfuscation_task']['output_file'],
-        )
-        
-    @task
-    def apply_obfuxtreme_protection(self) -> Task:
-        return Task(
-            description=self.tasks_config['apply_obfuxtreme_protection']['description'],
-            expected_output=self.tasks_config['apply_obfuxtreme_protection']['expected_output'],
-            agent=self.obfuxtreme_agent(),
-            context=[self.final_obfuscation_task()],
-            output_file=self.tasks_config['apply_obfuxtreme_protection']['output_file'],
-        )
+    # @task
+    # def apply_packing_protection(self) -> Task:
+    #     return Task(
+    #         description=self.tasks_config['apply_packing_protection']['description'],
+    #         expected_output=self.tasks_config['apply_packing_protection']['expected_output'],
+    #         agent=self.packer_agent(),
+    #         context=[self.string_encryptor_task()],
+    #         output_file=self.tasks_config['apply_packing_protection']['output_file'],
+    #     )
 
     @crew
     def crew(self) -> Crew:
+    # Group tasks that can run in parallel
+        group1 = [self.technique_selection_task()]
+        group2 = [self.code_obfuscation_task(), self.string_encryptor_task()]
+        # group3 = [self.apply_packing_protection()]
+        
         return Crew(
             agents=self.agents,
-            tasks=self.tasks,
+            tasks=[*group1, *group2],
             process=Process.sequential,
             verbose=True,
         )

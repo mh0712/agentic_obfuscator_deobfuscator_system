@@ -1,0 +1,121 @@
+```json
+[
+  {
+    "function_name": "main",
+    "type": "flattening",
+    "addresses": {
+      "insert": [
+        {
+          "address": "0x14000153f",
+          "instructions": [
+            "MOV EAX, 0x0",
+            "dispatcher:",
+            "CMP EAX, 0x0",
+            "JE path1",
+            "CMP EAX, 0x1",
+            "JE path2",
+            "CMP EAX, 0x2",
+            "JE path3",
+            "JMP end_dispatcher",
+            "path1:"
+          ]
+        }
+      ],
+      "replace": [
+        {
+          "address": "0x140001547",
+          "instruction": "CALL 0x140001640",
+          "replacement": [
+            "MOV EAX, 0x1",
+            "JMP dispatcher"
+          ]
+        },
+        {
+          "address": "0x140001556",
+          "instruction": "CALL 0x140007c70",
+          "replacement": [
+            "MOV EAX, 0x2",
+            "JMP dispatcher"
+          ]
+        },
+        {
+          "address": "0x140001560",
+          "instruction": "CALL 0x140001530",
+          "replacement": [
+            "MOV EAX, 0x3",
+            "JMP dispatcher"
+          ]
+        }
+      ]
+    },
+    "operands": {
+      "registers": ["EAX"],
+      "constants": ["0x0", "0x1", "0x2", "0x3"],
+      "labels": ["dispatcher", "path1", "path2", "path3", "end_dispatcher"]
+    }
+  },
+  {
+    "function_name": "main",
+    "type": "opaque_predicates",
+    "addresses": {
+      "insert": [
+        {
+          "address": "0x140001553",
+          "instructions": [
+            "MOV EAX, EAX", 
+            "CMP EAX, EAX", 
+            "JE always_true"
+          ]
+        }
+      ]
+    },
+    "operands": {
+      "registers": ["EAX"],
+      "constants": [],
+      "labels": ["always_true"]
+    }
+  },
+  {
+    "function_name": "main",
+    "type": "substitution",
+    "addresses": {
+      "replace": [
+        {
+          "address": "0x14000154c",
+          "instruction": "LEA RAX,[0x140009000]",
+          "replacement": [
+            "MOV RDX, 0x140009000",
+            "ADD RAX, RDX"
+          ]
+        }
+      ]
+    },
+    "operands": {
+      "registers": ["RAX", "RDX"],
+      "constants": ["0x140009000"],
+      "labels": []
+    }
+  },
+  {
+    "function_name": "main",
+    "type": "dead_code",
+    "addresses": {
+      "insert": [
+        {
+          "address": "0x14000156b",
+          "instructions": [
+            "PUSH RAX",
+            "MOV RAX, 0xDEADBEEF", 
+            "POP RAX"
+          ]
+        }
+      ]
+    },
+    "operands": {
+      "registers": ["RAX"],
+      "constants": ["0xDEADBEEF"],
+      "labels": []
+    }
+  }
+]
+```

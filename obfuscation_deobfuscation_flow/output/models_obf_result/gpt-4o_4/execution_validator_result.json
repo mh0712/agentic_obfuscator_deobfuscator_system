@@ -1,0 +1,9 @@
+{
+  "is_valid_syntax": true,
+  "syntax_error": null,
+  "runs_without_error": false,
+  "runtime_error": {
+    "error_type": "UnicodeDecodeError",
+    "stack_trace": "Traceback (most recent call last):\n  File \"<string>\", line 52, in <module>\n  File \"<string>\", line 38, in ovncuio\n  File \"<string>\", line 10, in ajksfhkl\n  File \"<string>\", line 3, in ldzvhaoi\nUnicodeDecodeError: 'utf-8' codec can't decode byte 0xa9 in position 10: invalid start byte"
+  }
+}

@@ -1,0 +1,69 @@
+[
+  {
+    "technique_name": "Variable Renaming",
+    "description": "Replace variable and function names with randomly generated strings to hinder readability and reverse engineering.",
+    "parameters": {
+      "name_length": 8,
+      "allowed_characters": "abcdefghijklmnopqrstuvwxyz_0123456789"
+    },
+    "llm_prompt": "Task: Apply variable renaming to the following code by replacing all function names, parameter names, and variable names with unique, meaningless identifiers. Constraints: All new names must be exactly {{name_length}} characters long. Only use lowercase letters from this set: '{{allowed_characters}}'. Avoid Python/JavaScript keywords and built-in names. Ensure the obfuscated code remains functional and syntactically valid. Do not alter string literals, comments, or any external API/library names. Maintain formatting and indentation of the original code. Input code: ```{{language}} {{code}}```",
+    "layering_priority": 6,
+    "metrics_score": 3,
+    "reasoning": "Maintains balance by diversifying with structural obfuscation."
+  },
+  {
+    "technique_name": "String Encryption",
+    "description": "Encrypt or encode all string literals using a reversible method, storing them in variables or decoding functions to prevent static analysis.",
+    "parameters": {
+      "method": "base64",
+      "variable_name_length": 8,
+      "allowed_characters": "abcdefghijklmnopqrstuvwxyz"
+    },
+    "llm_prompt": "Task: Obfuscate the following code by encrypting all string literals using the {{method}} encoding technique. Inject lightweight runtime decoding logic to restore original strings dynamically during execution. Constraints: Apply encryption to all plain string literals, Do NOT encode import/module statements, Ensure encoded strings are not recognizable. Place decoder logic in a non-obvious location. Input code: ```{{language}} {{code}}```",
+    "layering_priority": 8,
+    "metrics_score": 5,
+    "reasoning": "Enhances security by encoding sensitive data elements with a focus on data obfuscation."
+  },
+  {
+    "technique_name": "Opaque Predicates",
+    "description": "Introduce opaque predicates that evaluate to always true or false but appear complex, making the control flow harder to analyze.",
+    "parameters": {
+      "insertion_frequency": "moderate",
+      "predicate_type": "always_true",
+      "variable_name_length": 8,
+      "allowed_characters": "abcdefghijklmnopqrstuvwxyz"
+    },
+    "llm_prompt": "Task: Obfuscate the following {{language}} code by injecting opaque predicates that add conditional logic that always evaluates to {{predicate_type}}. Preserve execution flow, and maintain semantic equivalence. Input code: ```{{language}} {{code}}```",
+    "layering_priority": 2,
+    "metrics_score": 6,
+    "reasoning": "Utilized for control-flow confusion, important given reasonable levels of control structures."
+  },
+  {
+    "technique_name": "Array Folding",
+    "description": "Consolidate multiple constants or values into arrays or objects, accessing them by index to obscure original usage.",
+    "parameters": {
+      "fold_literals": true,
+      "fold_identifiers": true,
+      "use_index_aliasing": true,
+      "use_shuffled_array": true,
+      "use_multidimensional_folding": true,
+      "use_constant_reconstruction": true
+    },
+    "llm_prompt": "Task: Obfuscate the following code using advanced array folding, applying transformations that preserve semantic behavior but significantly hinder reverse engineering. Input code: ```{{language}} {{code}}```",
+    "layering_priority": 5,
+    "metrics_score": 6,
+    "reasoning": "Aids data-level obfuscation by folding literals into arrays."
+  },
+  {
+    "technique_name": "Function Outlining",
+    "description": "Break down complex functions into smaller, less meaningful helper functions to increase confusion and reduce analysis accuracy.",
+    "parameters": {
+      "min_functions": 2,
+      "function_name_length": 8
+    },
+    "llm_prompt": "Task: Obfuscate the following {{language}} code by breaking complex functions into smaller helper functions. Constraints: Create meaningless named functions, do not alter the overall functionality. Input code: ```{{language}} {{code}}```",
+    "layering_priority": 1,
+    "metrics_score": 5,
+    "reasoning": "Introduces simplicity through breaking complex functions, increasing difficulty in analysis."
+  }
+]

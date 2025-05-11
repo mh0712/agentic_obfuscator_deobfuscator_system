@@ -1,0 +1,66 @@
+[
+  {
+    "technique_name": "Function Outlining",
+    "description": "Break down complex functions into smaller, less meaningful helper functions to increase confusion and reduce analysis accuracy.",
+    "parameters": {
+      "min_functions": 2,
+      "function_name_length": 8
+    },
+    "llm_prompt": "Task:\nObfuscate the following Python code by breaking complex functions into smaller helper functions.\nEach helper function should have a meaningless name and perform a small, seemingly unrelated task.\nDo not alter the overall functionality of the program.\nUse random names for each new function (generated from 8-character strings).\nConstraints:\nCreate at least 2 new helper functions.\nEnsure the new functions do not directly reveal the main logic of the program.\nDo not introduce any additional external dependencies.\n\nExample Transformation:\nBefore:\ndef process_data(x, y):\n    return x * y + 10\n\nAfter:\ndef hghvbnfg(x):\n    return x * 2\n\n    def akjdhgl(x):\n    return x + 10\n\ndef process_data(x, y):\n    return akjdhgl(hghvbnfg(x) + y)\n\n\nInput code:\n```python\n{{code}}\n```",
+    "layering_priority": 1,
+    "metrics_score": 5,
+    "reasoning": "This technique is selected first to break down functions early on, therefore masking the function structure before further obfuscation layers are applied."
+  },
+  {
+    "technique_name": "Opaque Predicates",
+    "description": "Introduce opaque predicates that evaluate to always true or false but appear complex, making the control flow harder to analyze.",
+    "parameters": {
+      "insertion_frequency": "moderate",
+      "predicate_type": "always_true",
+      "variable_name_length": 8,
+      "allowed_characters": "abcdefghijklmnopqrstuvwxyz"
+    },
+    "llm_prompt": "Task:\nObfuscate the following Python code by injecting opaque predicates that:\nAdd conditional logic that always evaluates to always_true.\nAre resistant to static analysis, symbolic execution, and pattern matching.\nDo not affect the actual execution flow of the original program.\n\nOpaque predicates must include:\nNon-trivial math (e.g., modulo with large primes, bit tricks).\nEnvironment-based values (e.g., timestamps, system state) when possible.\nAll opaque branches that don't affect execution must contain no-ops, decoy logic, or junk calls (e.g., unreachable dummy functions).\nAny helper variables or functions must use meaningless 8-character names composed from the character set \"abcdefghijklmnopqrstuvwxyz\".\nMaintain full semantic equivalence and ensure the final code is valid and executable.\n\nExamples of opaque predicates:\nPython:\n# Always True: XOR with self is 0\nif ((1337 ^ 1337) == 0):\n    pass\n\n# Always False: 1234 AND 0 is 0\nif ((1234 & 0) != 0):\n    pass\n\n# Always True: String lengths match\nif (len(\"obfuscation\") == len(\"obfuscation\")):\n    pass\n\n# Always True: Modulo trick\nif ((42 * 17 + 1) % 17 == 1):\n    pass\n\n# Always False: ID of two different objects is never equal\nif (id(object()) == id(object())):\n    pass\n\n# Always True: Functionally obscure\nif (all([True for _ in range(3)]) and not False):\n    pass\n\n\nInput code:\n```python\n{{code}}\n```",
+    "layering_priority": 2,
+    "metrics_score": 6,
+    "reasoning": "With its capacity to bolster control-flow complexity, this technique will supplement the initial structural changes."
+  },
+  {
+    "technique_name": "String Encryption",
+    "description": "Encrypt or encode all string literals using a reversible method, storing them in variables or decoding functions to prevent static analysis.",
+    "parameters": {
+      "method": "base64",
+      "variable_name_length": 8,
+      "allowed_characters": "abcdefghijklmnopqrstuvwxyz"
+    },
+    "llm_prompt": "Task:\nObfuscate the following code by encrypting all string literals using the base64 encoding technique. Inject lightweight runtime decoding logic to restore original strings dynamically during execution.\nConstraints:\nApply encryption to all plain string literals, including:\nPrinted messages\nAssignments\nReturn values\nConditionals and comparisons\nDo NOT encode:\nImport/module/include statements\nExternal file paths or URLs\nDocumentation strings or annotations\nEnsure encoded strings are not recognizable at a glance (e.g., no clear base64/plaintext chunks).\nPlace decoder logic in a non-obvious location (e.g., in a helper function or a lambda).\nDecoder must execute just-in-time, restoring strings only when needed.\n\nExample Transformations:\nPython (with Base64):\nimport base64\ndef axz(s): return base64.b64decode(s).decode()\nprint(axz(\"SGVsbG8sIHdvcmxkIQ==\"))\n\n\nInput code:\n```python\n{{code}}\n```",
+    "layering_priority": 8,
+    "metrics_score": 5,
+    "reasoning": "Selected due to its high value in obscuring data, applicable after structural and flow obfuscation to ensure string literals are securely encrypted."
+  },
+  {
+    "technique_name": "Variable Renaming",
+    "description": "Replace variable and function names with randomly generated strings to hinder readability and reverse engineering.",
+    "parameters": {
+      "name_length": 8,
+      "allowed_characters": "abcdefghijklmnopqrstuvwxyz_0123456789"
+    },
+    "llm_prompt": "Task:\nApply variable renaming to the following code by replacing all function names, parameter names, and variable names with unique, meaningless identifiers.\nConstraints:\nAll new names must be exactly 8 characters long.\nOnly use lowercase letters from this set: \"abcdefghijklmnopqrstuvwxyz_0123456789\".\nAvoid Python/JavaScript keywords and built-in names.\nEnsure the obfuscated code remains functional and syntactically valid.\nDo not alter string literals, comments, or any external API/library names.\nMaintain formatting and indentation of the original code.\n\n\nInput code:\n```python\n{{code}}\n```",
+    "layering_priority": 6,
+    "metrics_score": 3,
+    "reasoning": "This technique will disguise the identity of variables, increasing the difficulty of understanding or reconstructing the original code."
+  },
+  {
+    "technique_name": "Control Flow Insertion",
+    "description": "Insert extra control flow statements, like loops, conditionals, and switches, to make the logic of the program harder to follow.",
+    "parameters": {
+      "max_insertions": 3,
+      "insertion_probability": 0.2,
+      "insertion_depth": 2
+    },
+    "llm_prompt": "Task:\nObfuscate the following Python code by adding extra control flow statements, such as loops, conditionals, or switches.\nThe goal is to obscure the flow of control and add non-essential operations.\nAvoid modifying or altering the original functionality of the code.\nMake sure the inserted control flow is non-trivial and looks plausible.\n\nConstraints:\nInsert at most 3 extra flow control structures (e.g., loops, if-statements, switches).\nEnsure the control structures do not change the actual logic of the program.\nInsert control flow at random points in the code (e.g., before or after function calls, within functions, etc.).\nUse different types of control structures for diversity (e.g., `for` loops, `while` loops, `switch` statements).\n\nExample transformations:\nBefore:\nif x > 5:\n    print(\"Success\")\nAfter:\nif random.choice([True, False]):\n    if x > 5:\n        print(\"Success\")\n    else:\n        print(\"Failure\")\nelse:\n    if x < 10:\n        print(\"Out of bounds\")\n\n\nInput code:\n```python\n{{code}}\n```",
+    "layering_priority": 3,
+    "metrics_score": 7,
+    "reasoning": "This technique adds complexity by modifying the control logic of the code, making reverse engineering substantially more challenging."
+  }
+]
