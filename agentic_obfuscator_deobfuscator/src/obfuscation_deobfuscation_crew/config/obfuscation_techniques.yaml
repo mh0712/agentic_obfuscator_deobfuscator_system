@@ -1,0 +1,483 @@
+obfuscation_techniques:
+  - name: "Variable Renaming"
+    transformation_type: "structure"
+    layering_priority: 6
+    conflicts_with: []
+    applicability: ["python", "javascript"]
+    conditions:
+      min_identifiers: 3
+    complexity_rating: 3
+    description: "Replace variable and function names with randomly generated strings to hinder readability and reverse engineering."
+    parameters:
+      name_length: 8
+      allowed_characters: "abcdefghijklmnopqrstuvwxyz_0123456789"
+    llm_prompt: |
+      Task:
+      Apply variable renaming to the following code by replacing all function names, parameter names, and variable names with unique, meaningless identifiers.
+      Constraints:
+      - All new names must be exactly {{name_length}} characters long.
+      - Only use lowercase letters from this set: "{{allowed_characters}}".
+      - Avoid Python/JavaScript keywords and built-in names.
+      - Ensure the obfuscated code remains functional and syntactically valid.
+      - Do not alter string literals, comments, or any external API/library names.
+      - Maintain formatting and indentation of the original code.
+
+       Input code:
+      ```{{language}}
+      {{code}}
+      ```
+
+  - name: "String Encryption"
+    transformation_type: "data"
+    layering_priority: 8
+    conflicts_with:
+      - "String Splitting"
+    applicability: ["python", "javascript"]
+    conditions:
+      min_string_literals: 1
+    complexity_rating: 5
+    description: "Encrypt or encode all string literals using a reversible method, storing them in variables or decoding functions to prevent static analysis."
+    parameters:
+      method: "base64"
+      variable_name_length: 8
+      allowed_characters: "abcdefghijklmnopqrstuvwxyz"
+    llm_prompt: |
+      Task:
+      Obfuscate the following code by encrypting all string literals using the {{method}} encoding technique. Inject lightweight runtime decoding logic to restore original strings dynamically during execution.
+      Constraints:
+      - Apply encryption to all plain string literals, including:
+            - Printed messages
+            - Assignments
+            - Return values
+            - Conditionals and comparisons
+      Do NOT encode:
+      - Import/module/include statements
+      - External file paths or URLs
+      - Documentation strings or annotations
+        Ensure encoded strings are not recognizable at a glance (e.g., no clear base64/plaintext chunks).
+        Place decoder logic in a non-obvious location (e.g., in a helper function or a lambda).
+        Decoder must execute just-in-time, restoring strings only when needed.
+
+      Example Transformations:
+      Python (with Base64):
+      import base64
+      def axz(s): return base64.b64decode(s).decode()
+      print(axz("SGVsbG8sIHdvcmxkIQ=="))
+      JavaScript (with XOR):
+
+      javascript
+      function jg(x){return x.split('').map(c=>String.fromCharCode(c.charCodeAt(0)^42)).join('');}
+      console.log(jg("\u001f\u000f\u0017\u0017"));
+
+       Input code:
+      ```{{language}}
+      {{code}}
+      ```
+
+  - name: "Opaque Predicates"
+    transformation_type: "control-flow"
+    layering_priority: 2
+    conflicts_with:
+      - "Dead Code Injection"
+    applicability: ["python", "javascript"]
+    conditions:
+      min_control_structures: 1
+    complexity_rating: 6
+    description: "Introduce opaque predicates that evaluate to always true or false but appear complex, making the control flow harder to analyze."
+    parameters:
+      insertion_frequency: "moderate"
+      predicate_type: "always_true"
+      variable_name_length: 8
+      allowed_characters: "abcdefghijklmnopqrstuvwxyz"
+    llm_prompt: |
+      Task:
+      Obfuscate the following {{language}} code by injecting opaque predicates that:
+      - Add conditional logic that always evaluates to {{predicate_type}}.
+      - Are resistant to static analysis, symbolic execution, and pattern matching.
+      - Do not affect the actual execution flow of the original program.
+
+      Opaque predicates must include:
+      - Non-trivial math (e.g., modulo with large primes, bit tricks).
+      - Environment-based values (e.g., timestamps, system state) when possible.
+      - All opaque branches that don’t affect execution must contain no-ops, decoy logic, or junk calls (e.g., unreachable dummy functions).
+      - Any helper variables or functions must use meaningless {{variable_name_length}}-character names composed from the character set "{{allowed_characters}}".
+      - Maintain full semantic equivalence and ensure the final code is valid and executable.
+
+      Examples of opaque predicates:
+      Python:
+      # Always True: XOR with self is 0
+      if ((1337 ^ 1337) == 0):
+          pass
+
+      # Always False: 1234 AND 0 is 0
+      if ((1234 & 0) != 0):
+          pass
+
+      # Always True: String lengths match
+      if (len("obfuscation") == len("obfuscation")):
+          pass
+
+      # Always True: Modulo trick
+      if ((42 * 17 + 1) % 17 == 1):
+          pass
+
+      # Always False: ID of two different objects is never equal
+      if (id(object()) == id(object())):
+          pass
+
+      # Always True: Functionally obscure
+      if (all([True for _ in range(3)]) and not False):
+          pass
+
+      JavaScript:
+            // Always True: 999 ^ 999 === 0
+        if ((999 ^ 999) === 0) {
+            // true
+        }
+
+        // Always False: Random-looking logic, but known result
+        if (((Math.floor(Date.now()) % 2) + 1) === 3) {
+            // false
+        }
+
+        // Always True: x ^ x = 0
+        let x = 123;
+        if (((x ^ x) + 0) === 0) {
+            // true
+        }
+
+        // Always False: Empty string !== ' '
+        if ('' === ' ') {
+            // false
+        }
+
+        // Always True: type coercion with number
+        if (parseInt("0x2A") === 42) {
+            // true
+        }
+
+        // Always True: Random-seeming math, but deterministic
+        if (((2 << 3) / 4) === 4) {
+            // (2 * 8) / 4 = 16 / 4 = 4
+        }
+
+       Input code:
+      ```{{language}}
+      {{code}}
+      ```
+
+  - name: "Dead Code Injection"
+    transformation_type: "structure"
+    layering_priority: 4
+    conflicts_with:
+      - "Opaque Predicates"
+    applicability: ["python", "javascript"]
+    conditions:
+      min_code_blocks: 2
+    complexity_rating: 4
+    description: "Inject non-functional code blocks that don't affect runtime behavior to mislead code readers and analysis tools."
+    parameters:
+      noise_density: 0.2
+      allowed_dead_types: ["useless loops", "always-false ifs", "unused functions"]
+    llm_prompt: |
+      Task:
+      Apply dead code injection to the following {{language}} code with the goal of increasing reverse engineering resistance without altering its behavior.
+
+      Constraints:
+      Inject non-functional code that does not affect runtime behavior, including:
+      Unused variables
+      Dead branches (always-false or never-executed)
+      Dummy functions
+      
+      Maintain original behavior and observable output.
+      Spread dead code naturally and sparsely across logical blocks, respecting a density of {{noise_density}}.
+      Injection Rules:
+      Use only these types of dead code: {{allowed_dead_types | join(", ")}}.
+      - Dead code must not be trivially detectable, and should include:
+      - Nonsensical names ({{variable_name_length}}-character identifiers from "{{allowed_characters}}")
+      - Semi-plausible logic (e.g., math formulas, empty I/O, or unreachable nested branches)
+      - Conditional wrappers or loops that look real but never execute
+
+      Examples of harder dead code:
+      Python:
+      jmuyhiouh = sum([i*i for i in range(10)])  
+      def zgf(): return len("decoy") * 123
+      if False or 1 < 0: zgf()
+
+      JavaScript:
+      let binonmkl = Math.pow(7, 4); 
+      function qxw() { return new Date().getTimezoneOffset(); }
+      if (false && true) { qxw(); }
+
+       Input code:
+      ```{{language}}
+      {{code}}
+      ```
+
+  - name: "Array Folding"
+    transformation_type: "data"
+    layering_priority: 5
+    conflicts_with:
+      - "Minification"
+    applicability: ["python", "javascript"]
+    conditions:
+      min_literals: 2
+    complexity_rating: 6
+    description: "Consolidate multiple constants or values into arrays or objects, accessing them by index to obscure original usage."
+    parameters:
+      fold_literals: true
+      fold_identifiers: true
+      use_index_aliasing: true
+      use_shuffled_array: true
+      use_multidimensional_folding: true
+      use_constant_reconstruction: true
+
+    llm_prompt: |
+     Task:
+      Obfuscate the following code using advanced array folding, applying transformations that preserve semantic behavior but significantly hinder reverse engineering.
+      Replace hardcoded literals and identifiers (with array lookups).
+      - Index Aliasing 
+      - Multi-dimensional Folding
+      - Shuffled Array + Index Map
+      - Split Constant Reconstruction
+  
+      Example – Combined Techniques:
+      Before:
+      print("Hello World")
+      After (with all features enabled):
+
+      _ = ["rld", "He", "llo ", "Wo"]
+      m = [1, 2, 3, 0]
+      s = _[m[1]] + _[m[2]] + _[m[3]] + _[m[0]]
+      print(s)
+
+       Input code:
+      ```{{language}}
+      {{code}}
+      ```
+
+  - name: "String Splitting"
+    transformation_type: "data"
+    layering_priority: 7
+    conflicts_with:
+      - "String Encryption"
+    applicability: ["python", "javascript"]
+    conditions:
+      min_string_literals: 1
+    complexity_rating: 4
+    description: "Break strings into multiple concatenated substrings to prevent full pattern matching and confuse static analysis tools."
+    parameters:
+      max_chunk_length: 4
+      use_reversed_chunks: true
+      join_method: "concat"
+    llm_prompt: |
+      You are tasked with obfuscating strings in {{language}} code via chunk-based string splitting.
+      Instructions:
+      - Apply the following transformation rules to all string literals:
+      - Split strings into segments of up to {{max_chunk_length}} characters.
+      - Use dynamic concatenation methods to reassemble split strings during execution.
+      - Use the variable `{{join_method}}` for combining substrings.
+      - Ensure concatenation points are random, using various positions within the string.
+
+      Example of transformation:
+      Before:
+      print("Hello World!")
+      After:
+      print("".join(["Hel", "lo", " ", "Wo", "rld", "!"]))
+
+       Input code:
+      ```{{language}}
+      {{code}}
+      ```
+
+  - name: "Control Flow Insertion"
+    transformation_type: "control-flow"
+    layering_priority: 3
+    conflicts_with: []
+    applicability: ["python", "javascript"]
+    conditions:
+      min_control_flow_structures: 1
+    complexity_rating: 7
+    description: "Insert extra control flow statements, like loops, conditionals, and switches, to make the logic of the program harder to follow."
+    parameters:
+      max_insertions: 3
+      insertion_probability: 0.2
+      insertion_depth: 2
+    llm_prompt: |
+      Task:
+      Obfuscate the following {{language}} code by adding extra control flow statements, such as loops, conditionals, or switches.
+      - The goal is to obscure the flow of control and add non-essential operations.
+      - Avoid modifying or altering the original functionality of the code.
+      - Make sure the inserted control flow is non-trivial and looks plausible.
+
+      Constraints:
+      - Insert at most {{max_insertions}} extra flow control structures (e.g., loops, if-statements, switches).
+      - Ensure the control structures do not change the actual logic of the program.
+      - Insert control flow at random points in the code (e.g., before or after function calls, within functions, etc.).
+      - Use different types of control structures for diversity (e.g., `for` loops, `while` loops, `switch` statements).
+
+      Example transformations:
+      Before:
+      if x > 5:
+          print("Success")
+      After:
+      if random.choice([True, False]):
+          if x > 5:
+              print("Success")
+          else:
+              print("Failure")
+      else:
+          if x < 10:
+              print("Out of bounds")
+
+       Input code:
+      ```{{language}}
+      {{code}}
+      ```
+
+  - name: "Function Outlining"
+    transformation_type: "structure"
+    layering_priority: 1
+    conflicts_with: []
+    applicability: ["python", "javascript"]
+    conditions:
+      min_functions: 1
+    complexity_rating: 5
+    description: "Break down complex functions into smaller, less meaningful helper functions to increase confusion and reduce analysis accuracy."
+    parameters:
+      min_functions: 2
+      function_name_length: 8
+    llm_prompt: |
+      Task:
+      Obfuscate the following {{language}} code by breaking complex functions into smaller helper functions.
+      - Each helper function should have a meaningless name and perform a small, seemingly unrelated task.
+      - Do not alter the overall functionality of the program.
+      - Use random names for each new function (generated from {{function_name_length}}-character strings).
+
+      Constraints:
+      - Create at least {{min_functions}} new helper functions.
+      - Ensure the new functions do not directly reveal the main logic of the program.
+      - Do not introduce any additional external dependencies.
+
+      Example Transformation:
+      Before:
+      def process_data(x, y):
+          return x * y + 10
+
+      After:
+      def hghvbnfg(x):
+          return x * 2
+
+      def akjdhgl(x):
+          return x + 10
+
+      def process_data(x, y):
+          return akjdhgl(hghvbnfg(x) + y)
+
+       Input code:
+      ```{{language}}
+      {{code}}
+      ```
+
+  - name: "Boolean Obfuscation"
+    transformation_type: "data"
+    layering_priority: 9
+    conflicts_with: []
+    applicability: ["python", "javascript"]
+    conditions:
+      min_boolean_expressions: 1
+    complexity_rating: 4
+    description: "Obfuscate boolean expressions by combining multiple comparisons, logical operations, or functions that don't change the result but increase complexity."
+    parameters:
+      max_operations: 3
+    llm_prompt: |
+      Task:
+      Obfuscate the boolean expressions in the following {{language}} code by combining multiple operations.
+      - The goal is to make each expression harder to analyze while preserving the original logic.
+      - Insert redundant comparisons or logical operations that evaluate to the same result but look more complex.
+      - Maintain the overall meaning and functionality of the code.
+
+      Constraints:
+      - Insert no more than {{max_operations}} redundant operations in each boolean expression.
+      - The resulting expressions should not be trivially simplified or obvious.
+
+      Example Transformations:
+      Before:
+      if x == 10:
+          print("Valid")
+      After:
+      if (x == 999 or x == 10) and not (x != 10 or x == 5):
+          print("Valid")
+
+       Input code:
+      ```{{language}}
+      {{code}}
+      ```
+  - name: "Identifier Aliasing"
+    transformation_type: "structure"
+    layering_priority: 5
+    conflicts_with: []
+    applicability: ["python", "javascript"]
+    conditions:
+      min_identifiers: 2
+    complexity_rating: 4
+    description: "Create aliases for standard or user-defined identifiers by assigning them to randomly named variables or functions, to obscure their actual purpose."
+    parameters:
+      alias_length: 10
+      allowed_characters: "abcdefghijklmnopqrstuvwxyz_0123456789"
+    llm_prompt: |
+      Task:
+      Obfuscate the code by introducing aliasing for identifiers. Replace references to built-in or user-defined functions and variables with randomly generated aliases.
+
+      Constraints:
+      - Each alias must be exactly {{alias_length}} characters long.
+      - Use only these characters for aliases: "{{allowed_characters}}".
+      - Do not alias language keywords or reserved built-ins (e.g., 'for', 'if', 'int').
+      - Ensure the code remains functional and syntactically correct.
+      - Do not change string literals, comments, or external module names.
+      - Preserve original formatting and indentation.
+
+      Input code:
+      ```{{language}}
+      {{code}}
+      ```
+      example:
+      Before:
+      def my_function(x):
+          return x + 1
+      After:
+      def aaaaaaaa(x):
+          return x + 1
+      aaaaaaaa = my_function
+
+      ```
+  
+  - name: "Minification"
+    transformation_type: "structure"
+    layering_priority: 10
+    conflicts_with:
+      - "Array Folding"
+    applicability: ["javascript"]
+    conditions:
+      min_code_length: 50
+    complexity_rating: 2
+    description: "Reduce the size of the code by removing unnecessary whitespace, comments, and renaming variables to shorter names."
+    parameters:
+      minification_level: 3
+      remove_comments: true
+      remove_whitespace: true
+    llm_prompt: |
+      Task:
+      Minify the following {{language}} code by removing unnecessary whitespace, comments, and renaming variables to shorter names.
+      - The goal is to reduce the size of the code while maintaining its functionality.
+      - Use a minification level of {{minification_level}}.
+
+      Constraints:
+      - Remove all comments and unnecessary whitespace.
+      - Rename variables to shorter names while ensuring they remain unique.
+      - Maintain the original functionality of the code.
+
+      Input code:
+      ```{{language}}
+      {{code}}
+      ```

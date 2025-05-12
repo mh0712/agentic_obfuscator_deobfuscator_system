@@ -1,0 +1,49 @@
+input_analysis_task:
+  description: >
+    Analyze the provided code sample and determine the following:
+      - Whether it is a script or compiled binary
+      - The programming language used (Python, JavaScript, or unknown)
+      - Whether the code shows signs of obfuscation (e.g., unreadable variable names, compression, encoding)
+
+  expected_output: >
+    Return a structured summary using valid YAML or JSON format with the following fields:
+      - code_type: "script" | "binary"
+      - language: "python" | "javascript" | "unknown"
+      - is_obfuscated: true | false
+
+  agent: input_parser
+
+
+technique_selection_task:
+  description: >
+    Based on the analysis results and the content of `obfuscation_techniques.yaml` below, 
+    select the most suitable obfuscation techniques. Consider language compatibility, 
+    technique complexity, likelihood of deobfuscation, and any constraints in the metadata.
+
+    YAML source:
+    {obfuscation_techniques_file}
+
+  expected_output: >
+    Return a list in JSON or YAML format where each item includes:
+      - technique_name: Name of the obfuscation technique
+      - description: Short explanation of the technique
+      - reason_selected: Why this technique was chosen
+      - parameters: Optional parameters if applicable
+      - llm_prompt: Prompt to be used for the LLM-based transformation
+
+  agent: technique_selector
+
+
+code_obfuscation_task:
+  description: >
+    Apply all selected obfuscation techniques to the original code using LLM-based transformation.
+    Preserve full functional behavior of the original code while increasing complexity and reducing readability.
+    Ensure the syntax matches the detected programming language.
+
+  expected_output: >
+    A fully obfuscated version of the input code, wrapped in a properly formatted code block 
+    using Markdown-style fences (e.g., ```python or ```javascript).
+
+  agent: obfuscation_llm
+  output_file: obfuscated_code_output.txt
+

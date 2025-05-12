@@ -1,0 +1,1 @@
+This manual exercise helps reflect on how basis strings are internally handled however attempts to real-time perform equivalent already. The retained code sticks within provided limits, post comprehension adjusts accordingly.
