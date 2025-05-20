@@ -13,11 +13,12 @@
         "7. Use `if (complex_expression)` or `while (complex_expression)` patterns where `complex_expression` is the opaque predicate."
       ],
       "example": {
-        "before": "if (x == 5) { doSomething(); }",
+        "before": "if (x === 5) { doSomething(); }",
         "after": [
-          "opaque_condition = (x * x + 3 * x + 2) % 2 == 0",
-          "if (opaque_condition):",
-          "doSomething()"
+          "let opaque_condition = (x * x + 3 * x + 2) % 2 === 0;",
+          "if (opaque_condition) {",
+          "    doSomething();",
+          "}"
         ]
       }
     },
@@ -27,7 +28,7 @@
     "llm_prompt": {
       "task": "Apply Control Flow Insertion obfuscation to the given source code.",
       "steps": [
-        "1. Identify key decision pods and control structures in the code, such as conditional statements (if-else, switch), loops (for, while), and function calls.",
+        "1. Identify key decision points and control structures in the code, such as conditional statements (if-else, switch), loops (for, while), and function calls.",
         "2. Insert additional control flow structures (e.g., fake conditionals, loops, or function calls) that do not alter the program's overall behavior but make the flow of execution more complex.",
         "3. Ensure that these inserted control flows are not executed under normal conditions. Use conditions that are always true or always false (e.g., if (false), if (true)), or insert loops that terminate immediately.",
         "4. Make sure the inserted control flow structures do not alter any important data or logic, they should serve only to confuse reverse engineering efforts.",
@@ -37,20 +38,22 @@
         "8. Ensure that the program's original functionality is preserved and behaves the same after the obfuscation."
       ],
       "example": {
-        "before": "if x > 5:\n    doSomething()\nelse:\n    doNothing()",
+        "before": "if (x > 5) { doSomething(); } else { doNothing(); }",
         "after": [
-          "if True:",
-          "    temp = 10",
-          "    if False:",
-          "        temp = 20",
-          "    # Fake logic for obfuscation",
-          "if x > 5:",
-          "    doSomething()",
-          "else:",
-          "    doNothing()",
-          "if False:",
-          "    dummy = 0",
-          "    dummy += 1"
+          "if (true) {",
+          "    let temp = 10;",
+          "    if (false) { temp = 20; }",
+          "    // Fake logic for obfuscation",
+          "}",
+          "if (x > 5) {",
+          "    doSomething();",
+          "} else {",
+          "    doNothing();",
+          "}",
+          "if (false) {",
+          "    let dummy = 0;",
+          "    dummy += 1;",
+          "}"
         ]
       }
     },
@@ -60,31 +63,57 @@
     "llm_prompt": {
       "task": "Apply Variable Renaming obfuscation to the given source code.",
       "steps": [
-        "1. Identify all variables in the source code, including local variables, global variables, parameters, functions , classes, methods and constants.",
+        "1. Identify all variables in the source code, including local variables, global variables, parameters, functions, classes, methods, and constants.",
         "2. Rename each variable with a unique, non-descriptive name. The new names should be short, random, and lack any meaningful relationship to the original names (e.g., `a`, `b`, `x1`, `temp123`).",
         "3. Ensure that the renamed variables do not conflict with other existing variables or reserved keywords in the language.",
         "4. Replace every instance of the original variable with its new name throughout the entire code base.",
-        "5. Optionally, droduce some misleading names to confuse reverse engineers (e.g., naming variables with names that seem meaningful but aren’t).",
+        "5. Optionally, introduce some misleading names to confuse reverse engineers (e.g., naming variables with names that seem meaningful but aren’t).",
         "6. If the variables are used across multiple files, ensure the renaming is consistent across all affected files.",
-        "7. Ensure that the renamed variables retain their original behavior, and the program logic remains dact.",
+        "7. Ensure that the renamed variables retain their original behavior, and the program logic remains intact.",
         "8. Avoid any pattern or recognizable structure in the naming convention to make it harder to predict or reverse-engineer the program."
       ],
       "example": {
         "before": [
-          "total = 0",
-          "for i in range(10):",
-          "    total += i",
-          "return total"
+          "let total = 0;",
+          "for (let i = 0; i < 10; i++) {",
+          "    total += i;",
+          "}",
+          "return total;"
         ],
         "after": [
-          "x1 = 0",
-          "for y1 in range(10):",
-          "    x1 += y1",
-          "return x1"
+          "let x1 = 0;",
+          "for (let y1 = 0; y1 < 10; y1++) {",
+          "    x1 += y1;",
+          "}",
+          "return x1;"
         ]
       }
     },
-    "layering_priority": 4
+    "layering_priority": 6
+  },
+  {
+    "llm_prompt": {
+      "task": "Apply Identifier Aliasing obfuscation to the given source code.",
+      "steps": [
+        "1. Identify key variables, constants, or function names in the code that are critical to its logic.",
+        "2. Create aliases for these identifiers by introducing new names (e.g., `tempVar`, `hiddenFunc`) that still map to the original identifier.",
+        "3. Replace all occurrences of the original identifier with its alias throughout the code.",
+        "4. Ensure that the alias is used consistently and that the original name is no longer directly visible in the code.",
+        "5. Avoid making the aliases too predictable (e.g., using random or misleading names like `alpha`, `bravo`, etc.) to make it harder to trace the original variable or function names.",
+        "6. If necessary, group multiple aliases for related identifiers (e.g., multiple variables or functions) under a common name or structure.",
+        "7. Ensure the program behaves exactly as before, with no functional changes or side effects caused by the aliasing.",
+        "8. Optionally, you can further obfuscate by creating additional mappings between original names and their aliases using a lookup table or array."
+      ],
+      "example": {
+        "before": "let sum = a + b; let result = sum * 2; return result;",
+        "after": [
+          "let alpha = a + b;",
+          "let bravo = alpha * 2;",
+          "return bravo;"
+        ]
+      }
+    },
+    "layering_priority": 5
   }
 ]
 ```

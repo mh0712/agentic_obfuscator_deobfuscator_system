@@ -255,12 +255,3 @@ def obfuscate_py(code):
     obfuscated_code = build_loader(encrypted, aes_key, iv, encrypted_strings, obf_names)
     print(f"[SUCCESS] Obfuscated with key: {aes_key.hex()}")
     return obfuscated_code
-
-if __name__ == "__main__":
-    # Example usage
-    original_code = """print("Hello, World!") """
-    obfuscated_code = obfuscate_py(original_code)
-    
-    # Save to file
-    with open("obfuscated_script.py", "w") as f:
-        f.write(obfuscated_code)

@@ -60,11 +60,13 @@ class Obfuscator(ast.NodeTransformer):
         if isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
             line_src = ast.unparse(node).strip()
             obf_code = inflate(line_src)
-            return ast.Expr(value=ast.Call(
+            # Ensure the indentation is kept for the obfuscated code
+            obfuscated_node = ast.Expr(value=ast.Call(
                 func=ast.Name(id='exec', ctx=ast.Load()),
                 args=[ast.Constant(value=obf_code)],
                 keywords=[]
             ))
+            return obfuscated_node
         return self.generic_visit(node)
 
     def visit_Expr(self, node):
@@ -72,27 +74,20 @@ class Obfuscator(ast.NodeTransformer):
         if isinstance(node.value, ast.Call) and getattr(node.value.func, 'id', '') == 'print':
             line_src = ast.unparse(node).strip()
             obf_code = inflate(line_src)
-            return ast.Expr(value=ast.Call(
+            # Ensure the indentation is kept for the obfuscated code
+            obfuscated_node = ast.Expr(value=ast.Call(
                 func=ast.Name(id='exec', ctx=ast.Load()),
                 args=[ast.Constant(value=obf_code)],
                 keywords=[]
             ))
+            return obfuscated_node
         return self.generic_visit(node)
 
 # --- Apply AST-based Obfuscation ---
-def encrypt_strings(source: str) -> str:
+def encrypt_strings_py(source: str) -> str:
     tree = ast.parse(source)
     transformer = Obfuscator()
     obfuscated_tree = transformer.visit(tree)
     ast.fix_missing_locations(obfuscated_tree)
     return ast.unparse(obfuscated_tree)
 
-# --- Main driver ---
-if __name__ == "__main__":
-    with open("script.py", "r") as f:
-        original_code = f.read()
-    
-    encrypted_code = encrypt_strings(original_code)
-    
-    with open("encrypted_output.py", "w") as f:
-        f.write(encrypted_code)

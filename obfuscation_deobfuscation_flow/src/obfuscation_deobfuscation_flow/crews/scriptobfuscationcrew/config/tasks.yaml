@@ -4,16 +4,16 @@
 
 technique_selection_task:
   description: |
-    Evaluate and select suitable obfuscation techniques for the given source code based on its complexity metrics and the available technique definitions.
+    Reasoning: Given the source code's complexity metrics, programming language, and a list of available obfuscation techniques, we must reason about compatibility, suitability, and diversity of techniques.
 
-    Follow these steps:
-    1. **Language Compatibility**: Filter techniques that match the target programming language as defined in their 'applicability' field.
-    2. **Complexity Suitability**: Match techniques whose 'conditions' are satisfied by the given `complexity` metrics (e.g., number of variables, functions).
-    3. **Precondition Check**: Enforce hard limits or required metrics in each technique's 'conditions' field.
-    4. **Conflict Resolution**: If techniques conflict (see 'conflicts_with'), prefer the one more aligned with the code structure.
-    5. **Diversity of Techniques**: Prioritize a mix of data, control-flow, and structural obfuscation types.
-    6. **Layering Priority**: Sort selected techniques by their `layering_priority` (low to high).
-    7. For each chosen technique, return the `layering_priority` and its full `llm_prompt`.
+    Action Plan:
+    1. Filter techniques by 'applicability' to ensure they support the target programming language. [Ref: technique schema]
+    2. Evaluate complexity metrics (e.g., number of variables, functions) and match them with each technique’s 'conditions'. [Ref: complexity-based selection logic]
+    3. Strictly enforce any hard preconditions (min/max thresholds, required fields). [Ref: constraints enforcement]
+    4. Detect and resolve conflicts using 'conflicts_with'; retain the more structurally relevant technique. [Ref: conflict resolution strategy]
+    5. Ensure diversity across categories: control-flow, data, and structural techniques. [Ref: obfuscation taxonomy]
+    6. Sort remaining techniques by their `layering_priority`, from lowest to highest. [Ref: ordering mechanism]
+    7. Return selected techniques with their complete `llm_prompt` and `layering_priority`.
 
     Inputs:
       - code complexity metrics: {complexity}
@@ -34,25 +34,24 @@ technique_selection_task:
         "layering_priority": number
       }
     ]
-  output_file: tests/selected_techniques.json
   agent: technique_selector
-
+  output_file: tests/selected_techniques.json
 
 code_obfuscation_task:
   description: |
-    Obfuscate the provided source code using the selected techniques by the technique_selection_task in order of their layering_priority.
+    Reasoning: Apply selected obfuscation techniques in the right order to transform the code without affecting its functionality.
 
-    Steps:
-    1. Sort selected techniques from lowest to highest `layering_priority`.
+    Action Plan:
+    1. Order techniques by `layering_priority` ascending. [Ref: layering strategy]
     2. For each technique:
-       - Read the `llm_prompt` including `task`, `steps`, and `example`.
-       - Apply the transformation to the code incrementally.
-       - Validate code syntax after each step.
-       - Never apply a technique at all if you are not 100% sure that your output gives things and runs the exact same as the original code.
-    3. Skip techniques incompatible with the language.
-    5. Ensure the final output is syntactically valid, executable, and preserves functionality.
-    6. Ensure the output is a pure obfuscated code without any comments, text or explanations before or after the code block.
-    7. After applying all techniques, ensure the output is functionally identical to the original code without any syntax errors.
+       - Read `llm_prompt` with its task, steps, and example. [Ref: llm_prompt format]
+       - Apply transformations one at a time.
+       - Validate syntax after every step. [Ref: code transformation safety]
+       - Do not apply a technique if it risks altering the original behavior. [Ref: functional integrity]
+    3. Skip techniques that are language-incompatible. [Ref: applicability check]
+    4. Ensure output code is syntactically valid, executable, and functionally equivalent.
+    5. Remove all explanatory text, comments, or markdown (e.g., no code fences).
+    6. Return the final obfuscated code.
 
     Input:
       - Original source code
@@ -60,14 +59,9 @@ code_obfuscation_task:
 
     Output must be:
       - Obfuscated
-      - Functionally identical to the original
-      - Resistant to static analysis
-      - Without any syntax errors
-
-    Output Must contain:
-      - Only the obfuscated code, no comments or explanations.
-      - No extra text or formatting (e.g., no "```python" or "```javascript").
-      - No quotes or backticks around the full code.
+      - Functionally identical
+      - Syntactically valid
+      - Devoid of comments or explanations
 
   expected_output: |
     <code>
@@ -77,22 +71,27 @@ code_obfuscation_task:
 
 string_encryptor_task:
   description: |
-    Input the code given by the code_obfuscation_task into the encryption_tool. The tool will parse the code, extract lines with print statements and string literals, and return a fully obfuscated version of the source code.
+    Reasoning: Finalize the obfuscation by targeting string literals and print statements for encryption using an external tool.
 
-     Output Must contain
-      - The entire obfuscated source code, with all substitutions applied.
-      - Only the obfuscated code, no comments or explanations.
-      - No extra formatting (e.g., no code fences or quote blocks).
-      - The obfuscated code must be written to the output file specified below.
-      - The process must ensure that the final code runs without syntax or runtime errors.
-      - The output must be a valid Python file with correct indentation that can be executed without any additional dependencies.
+    Action Plan:
+    1. Receive the obfuscated code from the previous task. [Ref: task dependency]
+    2. Pass it into the encryption_tool which extracts and encrypts all string literals.
+    3. Substitute encrypted strings back into the original code locations. [Ref: transformation rule]
+    4. Return fully obfuscated code with proper formatting and no comments or annotations.
+    5. Ensure final code is executable, syntax-valid, and complete.
 
+    Constraints:
+    - Output must be the entire obfuscated source code.
+    - No code fences, no explanations, no formatting hints.
+    - Code must be valid and indentation-preserved.
+    - File must execute without syntax or runtime errors.
 
-  expected_output:
+  expected_output: |
     <code>
     </code>
   agent: string_encryptor_agent
-  output_file: tests/string_encryption_obfuscation.{extension}
+  output_file: tests/obfuscation.{extension}
+
 
 
 

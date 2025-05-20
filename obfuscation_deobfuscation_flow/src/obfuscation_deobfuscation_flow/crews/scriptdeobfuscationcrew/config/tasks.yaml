@@ -1,0 +1,58 @@
+code_deobfuscation_task:
+  description: |
+    For each selected deobfuscation technique from the technique_selector_deobfuscation_task task, apply it to the obfuscated code {code} in a sequential manner.
+    apply it using its `llm_prompt` field exactly as provided.
+
+    Inject the code into the `{{code}}` placeholder and use the `language` metadata if needed.
+    Process is sequential: each transformation builds on the previous one.
+
+    Final code should be readable, equivalent, and free from obfuscation.
+
+  expected_output: |
+    <code>
+    # The cleaned, readable, and semantically equivalent version of the original obfuscated code.
+    </code>
+  agent: deobfuscation_llm
+  output_file: output/deobfuscated_code.{extension}
+  
+syntax_repair_task:
+  description: |
+    After initial deobfuscation, this task ensures that the code is **syntactically valid and complete**.
+    It analyzes potentially malformed or incomplete fragments resulting from string decoding, reconstruction, or transformation steps.
+    
+    Steps:
+    1. **Detect Syntax Issues**: Look for common issues like missing colons, incorrect indentation, broken lambdas, or invalid expressions.
+    2. **Repair Syntax**: Fix malformed definitions, incomplete blocks, and language-specific syntax violations.
+    3. **Ensure Completeness**: Ensure the code can be parsed without errors and appears logically complete.
+    
+    This is a cleanup pass designed to repair the results of layered deobfuscation and restore a valid script.
+
+  expected_output: |
+    <code>
+    # The syntactically valid and repaired version of the code.
+    </code>
+  agent: syntax_repair_agent
+  output_file: output/syntax_repair_output.{extension}
+
+technique_selector_deobfuscation_task:
+  description: |
+    Based on the conditions field that contains relevant pattern you can rely on, evaluate and select the best deobfuscation techniques for this code:{code} The reasoning should follow these steps:
+    1. **Language Compatibility**: Does the technique support the programming language of the code (Python or JavaScript)?
+    2. **Pattern conditions Check**: Does the technique require any specific conditions to be met (e.g., minimum number of identifiers or literals)?
+
+    Reasoning should be clear: if a technique is selected, provide a justification for its inclusion.
+    These techniques should be selected fully from the below JSON knowledge base that contains a list of deobfuscation techniques, their descriptions, parameters, and layering priorities:
+    {deobfuscation_techniques}.
+
+  expected_output: |
+    [
+      {
+        "technique_name": "Technique 1",
+        "description": "Brief explanation of the technique",
+        "llm_prompt": same prompt as the one in the deobfuscation_techniques JSON,
+        "reasoning": based on the conditions field that contains relevant pattern in the code, justification for selecting this technique.
+      },
+      ...
+    ]
+  output_file: output/selected_deobfuscation_techniques.json
+  agent: technique_selector_deobfuscation

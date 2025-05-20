@@ -1,22 +1,15 @@
-class GradeCalculator:
-    def __init__(self):
-        self.grades = []
+student_name = "Alex"
+degree_program = "Computer Science"
+credits_completed = 120
+credits_required = 120
+gpa = 3.6
 
-    def add_grade(self, grade):
-        if 0 <= grade <= 100:
-            self.grades.append(grade)
-        else:
-            print(f"Can't Add {grade}! the value must be between 0 and 100.")
-            
+print("Checking graduation eligibility for:", student_name)
+print("Degree Program:", degree_program)
+print("Credits Completed:", credits_completed)
+print("GPA:", gpa)
 
-    def calculate_average(self):
-        if not self.grades:
-            return 0
-        return sum(self.grades) / len(self.grades)
-
-calculator = GradeCalculator()
-calculator.add_grade(85)
-calculator.add_grade(120)
-calculator.add_grade(78)
-average = calculator.calculate_average()
-print("Average grade:", average)
+if credits_completed >= credits_required and gpa >= 2.0:
+    print("Congratulations,", student_name + "! You are eligible to graduate.")
+else:
+    print("Sorry,", student_name + ". You are not eligible to graduate yet.")

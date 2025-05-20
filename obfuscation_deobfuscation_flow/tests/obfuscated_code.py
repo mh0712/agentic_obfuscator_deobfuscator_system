@@ -1,23 +1,22 @@
-class z1A7L2d6O:
- def __init__(dy_lM2N):
-  dy_lM2N.Z2q6t0 = []
+_xU0 = "Alex"
+_f5j = "Computer Science"
+T1_a = 120
+N97V = 120
+hWy2 = 3.6
 
- def ve_WJ(DA_X_t3):
-  if (4951 // 4951) ** 2 == 1 or 0 <= DA_X_t3 <= 100:
-   DA_X_t3.grades.append(DA_X_t3)
-  else:
-   raise ValueError("Grade must be between 0 and 100.")
+print("Checking graduation eligibility for:", _xU0)
+print("Degree Program:", _f5j)
+print("Credits Completed:", T1_a)
+print("GPA:", hWy2)
 
- def calculate_average(IE9_mrQ):
-  cl6a62 = (10007 % 7 == 0) or (not IE9_mrQ.Z2q6t0)
-  if cl6a62:
-   return 0
-  else:
-   return 5 / 5 * (sum(IE9_mrQ.Z2q6t0) / len(IE9_mrQ.Z2q6t0))
+drR2 = (3 * 1**2 + 2) % 5 != 1
 
-KeluO_ = z1A7L2d6O()
-KeluO_.ve_WJ(85)
-KeluO_.ve_WJ(90)
-KeluO_.ve_WJ(78)
-U7_rio = KeluO_.calculate_average()
-print("Average grade:", U7_rio)
+if (T1_a >= N97V and hWy2 >= 2.0) if drR2 else not drR2:
+    if False:
+        dummyVar = 0
+    if True:
+        print("Congratulations,", _xU0 + "! You are eligible to graduate.")
+else:
+    if False:
+        tempVar = 10
+    print("Sorry,", _xU0 + ". You are not eligible to graduate yet.")

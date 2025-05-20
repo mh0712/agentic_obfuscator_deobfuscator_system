@@ -6,13 +6,13 @@
       "layering_priority": 4,
       "conflicts_with": [],
       "applicability": ["python", "javascript"],
-      "conditions": "Minimum identifiers: 3",
+      "conditions": "always",
       "complexity_rating": 3,
       "description": "Replace variable and function names with randomly generated strings to hinder readability and reverse engineering.",
       "llm_prompt": {
         "task": "Apply Variable Renaming obfuscation to the given source code.",
         "steps": [
-          "1. Identify all variables in the source code, including local variables, global variables, parameters, and constants.",
+          "1. Identify all variables in the source code, including local variables, global variables, parameters, functions , classes, methods and constants.",
           "2. Rename each variable with a unique, non-descriptive name. The new names should be short, random, and lack any meaningful relationship to the original names (e.g., `a`, `b`, `x1`, `temp123`).",
           "3. Ensure that the renamed variables do not conflict with other existing variables or reserved keywords in the language.",
           "4. Replace every instance of the original variable with its new name throughout the entire code base.",
@@ -148,7 +148,7 @@
       "layering_priority": 5,
       "conflicts_with": [],
       "applicability": ["python"],
-      "conditions": "Minimum identifiers: 3",
+      "conditions": "always",
       "complexity_rating": 4,
       "description": "Create aliases for standard or user-defined identifiers by assigning them to randomly named variables or functions to obscure their actual purpose. Use proxy imports to further obfuscate the source code by wrapping imports in functions and assigning the imports to obfuscated variables.",
       "llm_prompt": {

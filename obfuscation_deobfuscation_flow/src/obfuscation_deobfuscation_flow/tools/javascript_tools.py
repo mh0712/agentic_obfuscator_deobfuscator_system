@@ -9,7 +9,7 @@ def is_js_code(code_path: str) -> bool:
         long_path = r"\\?\\" + long_path if len(long_path) > 260 else long_path
         
         result = subprocess.run(
-            ["node", "C:\\Users\\celin\\Desktop\\usj\\FYP\\agentic_obfuscator_deobfuscator_system\\agentic_obfuscator_deobfuscator\\src\\obfuscation_deobfuscation_crew\\tools\\scripts\\js_code_check.js", long_path],
+            ["node", "C:\\Users\\celin\\Desktop\\usj\\FYP\\agentic_obfuscator_deobfuscator_system\\obfuscation_deobfuscation_flow\\src\\obfuscation_deobfuscation_flow\\tools\\scripts\\js_code_check.js", long_path],
             capture_output=True, text=True, check=True
         )
         return result
@@ -20,7 +20,7 @@ def is_js_code(code_path: str) -> bool:
 def is_obfuscated_js(file_path: str) -> bool:
     try:
         result = subprocess.run(
-            ["node", "C:\\Users\\celin\\Desktop\\usj\\FYP\\agentic_obfuscator_deobfuscator_system\\agentic_obfuscator_deobfuscator\\src\\obfuscation_deobfuscation_crew\\tools\\scripts\\js_obfuscation_check.js", file_path],
+            ["node", "C:\\Users\\celin\\Desktop\\usj\\FYP\\agentic_obfuscator_deobfuscator_system\\obfuscation_deobfuscation_flow\\src\\obfuscation_deobfuscation_flow\\tools\\scripts\\js_obfuscation_check.js", file_path],
             capture_output=True, text=True, check=True
         )
         output = json.loads(result.stdout.strip())
@@ -34,7 +34,7 @@ import json
 def analyze_javascript_complexity(code: str) -> dict:
     try:
         result = subprocess.run(
-            ["node", "C:\\Users\\celin\\Desktop\\usj\\FYP\\agentic_obfuscator_deobfuscator_system\\agentic_obfuscator_deobfuscator\\src\\obfuscation_deobfuscation_crew\\tools\\scripts\\complexity_analyser.js"],
+            ["node", "C:\\Users\\celin\\Desktop\\usj\\FYP\\agentic_obfuscator_deobfuscator_system\\obfuscation_deobfuscation_flow\\src\\obfuscation_deobfuscation_flow\\tools\\scripts\\complexity_analyser.js"],
             input=code,
             capture_output=True,
             text=True,
@@ -53,7 +53,7 @@ def analyze_javascript_complexity(code: str) -> dict:
 def obfuscate_js(code: str) -> str:
     try:
         result = subprocess.run(
-            ["node", "C:\\Users\\celin\\Desktop\\usj\\FYP\\agentic_obfuscator_deobfuscator_system\\agentic_obfuscator_deobfuscator\\src\\obfuscation_deobfuscation_crew\\tools\\scripts\\build_loader.js"],
+            ["node", "C:\\Users\\celin\\Desktop\\usj\\FYP\\agentic_obfuscator_deobfuscator_system\\obfuscation_deobfuscation_flow\\src\\obfuscation_deobfuscation_flow\\tools\\scripts\\build_loader.js"],
             input=code,
             capture_output=True,
             text=True,
@@ -67,3 +67,25 @@ def obfuscate_js(code: str) -> str:
     except Exception as e:
         print(f"[!] JavaScript obfuscation failed: {e}")
         return None
+
+def string_encryption_js(code: str) -> str:
+    try:
+        result = subprocess.run(
+            ["node", "C:\\Users\\celin\\Desktop\\usj\\FYP\\agentic_obfuscator_deobfuscator_system\\obfuscation_deobfuscation_flow\\src\\obfuscation_deobfuscation_flow\\tools\\scripts\\string_encryption.js"],
+            input=code,
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        output = result.stdout.strip()
+        if not output:
+            print("[!] No output from string encryption script.")
+            if result.stderr:
+                print("[stderr]:", result.stderr.strip())
+            return None
+        return output
+    except subprocess.CalledProcessError as e:
+        print(f"[!] JavaScript string encryption failed: {e}")
+        print(f"[stderr]: {e.stderr.strip()}")
+        return None
+    

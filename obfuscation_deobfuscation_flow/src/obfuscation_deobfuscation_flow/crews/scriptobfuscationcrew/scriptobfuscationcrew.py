@@ -1,10 +1,11 @@
 
 
-from crewai import Agent, Crew, Process, Task, LLM
+from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
 
 from src.obfuscation_deobfuscation_flow.tools.build_loader import obfuscate
-from src.obfuscation_deobfuscation_flow.tools.encryption_tool import encrypt_strings
+from src.obfuscation_deobfuscation_flow.tools.encryption_tool import encrypt_strings_py
+from src.obfuscation_deobfuscation_flow.tools.javascript_tools import string_encryption_js
 from crewai.tools import BaseTool
 
 # class PackerTool(BaseTool):
@@ -22,9 +23,14 @@ class EncryptionTool(BaseTool):
     name: str = "encryption_tool"
     description: str = "Encrypts the given code using a custom encryption method."
 
-    def _run(self, code: str) -> str:
+    def _run(self, code: str, language: str) -> str:
         try:
-            return encrypt_strings(code)
+            if language == "python":
+                return encrypt_strings_py(code)
+            elif language == "javascript":
+                return string_encryption_js(code)
+            else:
+                raise ValueError(f"Unsupported language: {language}")
         except Exception as e:
             print(f"[!] Encryption failed: {e}")
             return ""
@@ -44,8 +50,8 @@ class ScriptObfuscationCrew():
         return Agent(
             config=self.agents_config['technique_selector'],
             verbose=True,
-            max_execution_time=120,  # Reduce timeout if possible
-            max_iter=3,  # Limit iterations
+            # max_execution_time=120,  # Reduce timeout if possible
+            # max_iter=3,  # Limit iterations
         )
 
     @agent
@@ -53,8 +59,8 @@ class ScriptObfuscationCrew():
         return Agent(
             config=self.agents_config['obfuscation_llm'],
             verbose=True,
-            max_execution_time=300,
-            max_retry_limit=3,
+            # max_execution_time=300,
+            # max_retry_limit=3,
         )
 
     @agent
@@ -63,9 +69,9 @@ class ScriptObfuscationCrew():
             config=self.agents_config['string_encryptor_agent'],
             verbose=True,
             tools=[self.encryption_tool_instance],
-            max_execution_time=120,  # Reduce timeout if possible
-            max_iter=3,  # Limit iterations
-            max_rpm=None  # Remove rate limiting if not needed
+            # max_execution_time=120,  # Reduce timeout if possible
+            # max_iter=3,  # Limit iterations
+            # max_rpm=None  # Remove rate limiting if not needed
         )
 
     # @agent
@@ -87,7 +93,6 @@ class ScriptObfuscationCrew():
             expected_output=self.tasks_config['technique_selection_task']['expected_output'],
             agent=self.technique_selector(),
             output_file=self.tasks_config['technique_selection_task']['output_file'],
-            cache=True,
         )
 
     @task
